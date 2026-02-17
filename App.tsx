@@ -276,18 +276,28 @@ const App: React.FC = () => {
       if (hasAny) {
         setSyncStatus('sending');
         (async () => {
-          try {
-            await syncPendingOnly(supabase, pendingPayload);
-            setSyncStatus('ok');
-            setTimeout(() => setSyncStatus('idle'), 4000);
-          } catch (e) {
-            console.error('Falha ao sincronizar:', e);
-            setSyncStatus('fail');
-            if (savedPf) localStorage.setItem('pg_pending_fueling', savedPf);
-            if (savedPm) localStorage.setItem('pg_pending_maintenance', savedPm);
-            if (savedPdr) localStorage.setItem('pg_pending_daily_route', savedPdr);
-            setTimeout(() => setSyncStatus('idle'), 5000);
+          const maxAttempts = 3;
+          let lastErr: unknown = null;
+          for (let attempt = 0; attempt < maxAttempts; attempt++) {
+            try {
+              await syncPendingOnly(supabase, pendingPayload);
+              setSyncStatus('ok');
+              setTimeout(() => setSyncStatus('idle'), 4000);
+              return;
+            } catch (e) {
+              lastErr = e;
+              console.warn(`Tentativa ${attempt + 1}/${maxAttempts} falhou:`, e);
+              if (attempt < maxAttempts - 1) {
+                await new Promise((r) => setTimeout(r, 2000));
+              }
+            }
           }
+          console.error('Falha ao sincronizar após', maxAttempts, 'tentativas:', lastErr);
+          setSyncStatus('fail');
+          if (savedPf) localStorage.setItem('pg_pending_fueling', savedPf);
+          if (savedPm) localStorage.setItem('pg_pending_maintenance', savedPm);
+          if (savedPdr) localStorage.setItem('pg_pending_daily_route', savedPdr);
+          setTimeout(() => setSyncStatus('idle'), 5000);
         })();
       }
       return;
