@@ -232,33 +232,72 @@ const App: React.FC = () => {
       localStorage.getItem('pg_pending_maintenance') ||
       localStorage.getItem('pg_pending_daily_route');
 
-    if (hasPending) {
-      // Voltou de um reload após enviar: aplica só o novo registro no estado atual (que veio do localStorage), sem carregar do Supabase
+    if (hasPending && supabase) {
+      // Voltou de um reload após enviar: aplica o novo registro e envia direto pro Supabase (admin vê na hora)
       const pf = localStorage.getItem('pg_pending_fueling');
+      const pm = localStorage.getItem('pg_pending_maintenance');
+      const pdr = localStorage.getItem('pg_pending_daily_route');
+
       if (pf) {
         try {
           const data = JSON.parse(pf);
           setFuelings(prev => [data, ...prev]);
-        } catch (_) {}
-        localStorage.removeItem('pg_pending_fueling');
+          localStorage.removeItem('pg_pending_fueling');
+          // Envia pro Supabase na hora para o admin ver
+          setTimeout(() => {
+            const u = localStorage.getItem('pg_users'); const v = localStorage.getItem('pg_vehicles'); const c = localStorage.getItem('pg_customers');
+            const fu = localStorage.getItem('pg_fuelings'); const m = localStorage.getItem('pg_maintenances'); const r = localStorage.getItem('pg_routes');
+            const dr = localStorage.getItem('pg_daily_routes'); const fe = localStorage.getItem('pg_fixed_expenses'); const ag = localStorage.getItem('pg_agregados');
+            const af = localStorage.getItem('pg_agregado_freights'); const t = localStorage.getItem('pg_tolls');
+            const payload = {
+              users: u ? JSON.parse(u) : [], vehicles: v ? JSON.parse(v) : [], customers: c ? JSON.parse(c) : [],
+              fuelings: fu ? JSON.parse(fu) : [], maintenances: m ? JSON.parse(m) : [], routes: r ? JSON.parse(r) : [],
+              dailyRoutes: dr ? JSON.parse(dr) : [], fixedExpenses: fe ? JSON.parse(fe) : [], agregados: ag ? JSON.parse(ag) : [],
+              agregadoFreights: af ? JSON.parse(af) : [], tolls: t ? JSON.parse(t) : []
+            };
+            syncAllToSupabase(supabase, payload);
+          }, 800);
+        } catch (_) { localStorage.removeItem('pg_pending_fueling'); }
       }
-      const pm = localStorage.getItem('pg_pending_maintenance');
       if (pm) {
         try {
           const data = JSON.parse(pm);
           setMaintenances(prev => [data, ...prev]);
-        } catch (_) {}
-        localStorage.removeItem('pg_pending_maintenance');
+          localStorage.removeItem('pg_pending_maintenance');
+          setTimeout(() => {
+            const u = localStorage.getItem('pg_users'); const v = localStorage.getItem('pg_vehicles'); const c = localStorage.getItem('pg_customers');
+            const fu = localStorage.getItem('pg_fuelings'); const m = localStorage.getItem('pg_maintenances'); const r = localStorage.getItem('pg_routes');
+            const dr = localStorage.getItem('pg_daily_routes'); const fe = localStorage.getItem('pg_fixed_expenses'); const ag = localStorage.getItem('pg_agregados');
+            const af = localStorage.getItem('pg_agregado_freights'); const t = localStorage.getItem('pg_tolls');
+            syncAllToSupabase(supabase, { users: u ? JSON.parse(u) : [], vehicles: v ? JSON.parse(v) : [], customers: c ? JSON.parse(c) : [], fuelings: fu ? JSON.parse(fu) : [], maintenances: m ? JSON.parse(m) : [], routes: r ? JSON.parse(r) : [], dailyRoutes: dr ? JSON.parse(dr) : [], fixedExpenses: fe ? JSON.parse(fe) : [], agregados: ag ? JSON.parse(ag) : [], agregadoFreights: af ? JSON.parse(af) : [], tolls: t ? JSON.parse(t) : [] });
+          }, 800);
+        } catch (_) { localStorage.removeItem('pg_pending_maintenance'); }
       }
-      const pdr = localStorage.getItem('pg_pending_daily_route');
       if (pdr) {
         try {
           const data = JSON.parse(pdr);
           setDailyRoutes(prev => [data, ...prev]);
-        } catch (_) {}
-        localStorage.removeItem('pg_pending_daily_route');
+          localStorage.removeItem('pg_pending_daily_route');
+          setTimeout(() => {
+            const u = localStorage.getItem('pg_users'); const v = localStorage.getItem('pg_vehicles'); const c = localStorage.getItem('pg_customers');
+            const fu = localStorage.getItem('pg_fuelings'); const m = localStorage.getItem('pg_maintenances'); const r = localStorage.getItem('pg_routes');
+            const dr = localStorage.getItem('pg_daily_routes'); const fe = localStorage.getItem('pg_fixed_expenses'); const ag = localStorage.getItem('pg_agregados');
+            const af = localStorage.getItem('pg_agregado_freights'); const t = localStorage.getItem('pg_tolls');
+            syncAllToSupabase(supabase, { users: u ? JSON.parse(u) : [], vehicles: v ? JSON.parse(v) : [], customers: c ? JSON.parse(c) : [], fuelings: fu ? JSON.parse(fu) : [], maintenances: m ? JSON.parse(m) : [], routes: r ? JSON.parse(r) : [], dailyRoutes: dr ? JSON.parse(dr) : [], fixedExpenses: fe ? JSON.parse(fe) : [], agregados: ag ? JSON.parse(ag) : [], agregadoFreights: af ? JSON.parse(af) : [], tolls: t ? JSON.parse(t) : [] });
+          }, 800);
+        } catch (_) { localStorage.removeItem('pg_pending_daily_route'); }
       }
-      if (supabase) setDbOnline(true);
+      setDbOnline(true);
+      return;
+    }
+    if (hasPending) {
+      // Sem Supabase: só aplica o pendente
+      const pf = localStorage.getItem('pg_pending_fueling');
+      if (pf) { try { setFuelings(prev => [JSON.parse(pf), ...prev]); } catch (_) {} localStorage.removeItem('pg_pending_fueling'); }
+      const pm = localStorage.getItem('pg_pending_maintenance');
+      if (pm) { try { setMaintenances(prev => [JSON.parse(pm), ...prev]); } catch (_) {} localStorage.removeItem('pg_pending_maintenance'); }
+      const pdr = localStorage.getItem('pg_pending_daily_route');
+      if (pdr) { try { setDailyRoutes(prev => [JSON.parse(pdr), ...prev]); } catch (_) {} localStorage.removeItem('pg_pending_daily_route'); }
       return;
     }
 
