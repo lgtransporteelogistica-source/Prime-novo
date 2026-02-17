@@ -1,0 +1,98 @@
+========================================
+  SUBIR NO GITHUB PELO SITE (SEM TERMINAL)
+========================================
+
+Siga estes passos usando só o navegador e o Explorador de Arquivos.
+
+----------------------------------------
+PASSO 1 - Abrir a pasta do projeto
+----------------------------------------
+
+1. Aperte a tecla Windows e digite: explorer
+2. Aperte Enter (abre o Explorador de Arquivos).
+3. Cole na barra de endereço (em cima) este caminho e aperte Enter:
+
+   C:\Users\USER\Desktop\Nova pasta\prime-projeto-main\prime-projeto-main
+
+4. Você deve ver as pastas: components, pages, public, supabase, etc.
+   E arquivos: package.json, index.html, LEAME.md, etc.
+
+----------------------------------------
+PASSO 2 - Selecionar o que vai subir (SEM a pasta node_modules)
+----------------------------------------
+
+1. Na mesma pasta, aperte Ctrl+A (seleciona tudo).
+2. Segure a tecla Ctrl e clique na pasta "node_modules" para DESMARCAR ela.
+   (Assim ela não entra no envio e o upload fica rápido.)
+3. Agora tudo está selecionado EXCETO node_modules.
+   (Se preferir, pode também desmarcar a pasta .git.)
+
+----------------------------------------
+PASSO 3 - Abrir o repositório no GitHub
+----------------------------------------
+
+1. Abra o navegador e vá em:
+
+   https://github.com/Igtransporteelogistica-fonte/Prime-novo
+
+2. Se o repositório estiver vazio, você verá a mensagem:
+   "Arraste os arquivos para cá para adicioná-los ao seu repositório."
+   E o link: "Ou escolha seus arquivos".
+
+----------------------------------------
+PASSO 4 - Enviar os arquivos
+----------------------------------------
+
+OPÇÃO A - Arrastar (recomendado)
+   • Deixe a janela do Explorador e a do GitHub lado a lado.
+   • Arraste os itens que você selecionou (no Explorador) para a área
+     "Arraste os arquivos para cá" no GitHub.
+   • Espere o upload terminar (pode demorar 1–2 minutos).
+
+OPÇÃO B - Escolher arquivos
+   • No GitHub, clique em "Ou escolha seus arquivos".
+   • Navegue até a pasta do projeto e selecione TUDO exceto a pasta
+     node_modules (Ctrl+A e depois Ctrl+clique em node_modules para desmarcar).
+   • Clique em "Abrir" e espere o upload.
+
+----------------------------------------
+PASSO 5 - Confirmar no GitHub
+----------------------------------------
+
+1. Em "Adicionar arquivos por meio de upload" escreva, por exemplo:
+   Prime Group - envio do projeto
+
+2. Clique no botão verde "Confirmar alterações".
+
+3. Pronto. Seu projeto estará no GitHub.
+
+----------------------------------------
+OBSERVAÇÃO - Pastas dentro de pastas
+----------------------------------------
+
+Se o GitHub não criar as subpastas (components, pages, supabase, etc.),
+você pode ter que fazer mais de um envio:
+
+• Primeiro envie os arquivos da RAIZ (package.json, index.html, LEAME.md,
+  SUBIR-PARA-GITHUB.txt, etc.) arrastando só eles.
+• Depois clique em "Add file" > "Create new file" e, em vez de criar arquivo,
+  use "upload files" de novo e arraste o CONTEÚDO de uma pasta (ex.: abra
+  "pages", selecione tudo dentro, arraste para o GitHub). Na caixa "Name"
+  do arquivo, digite: pages/ (com a barra) antes de confirmar, para criar
+  a pasta. Ou arraste a pasta "pages" inteira de uma vez; o GitHub às vezes
+  aceita e cria a estrutura.
+
+Alternativa mais simples: arraste primeiro a pasta "pages" inteira. Depois
+"components", depois "supabase", depois "public". Por último os arquivos
+solto (package.json, index.html, etc.). Assim a estrutura fica certa.
+
+========================================
+
+RESUMO RÁPIDO:
+1. Abrir pasta do projeto no Explorador.
+2. Selecionar tudo (Ctrl+A) e desmarcar "node_modules" (Ctrl+clique).
+3. Abrir github.com/.../Prime-novo no navegador.
+4. Arrastar os arquivos selecionados para a área de upload.
+5. Escrever "Prime Group - envio do projeto" e clicar em "Confirmar alterações".
+
+========================================
