@@ -478,10 +478,11 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-50">
-      <header className="bg-slate-900/80 backdrop-blur-md border-b border-slate-800 p-4 sticky top-0 z-50 flex justify-between items-center shadow-lg">
-        <div className="flex items-center gap-3 cursor-pointer group" onClick={() => navigate('operation')}>
-          <Logo size="sm" showText={false} />
+    <PageErrorBoundary onRetry={() => window.location.reload()}>
+      <div className="min-h-screen flex flex-col bg-slate-950 text-slate-50">
+        <header className="bg-slate-900/80 backdrop-blur-md border-b border-slate-800 p-4 sticky top-0 z-50 flex justify-between items-center shadow-lg">
+          <div className="flex items-center gap-3 cursor-pointer group" onClick={() => navigate('operation')}>
+            <Logo size="sm" showText={false} />
             <div className="flex flex-col">
               <h1 className="text-sm font-black tracking-[0.1em] text-white uppercase group-hover:text-blue-400 transition-colors">PRIME GROUP</h1>
               <div className="flex items-center gap-1.5">
@@ -489,25 +490,24 @@ const App: React.FC = () => {
                 <span className="text-[8px] font-black uppercase text-slate-500 tracking-widest">{isSupabaseOnline() && dbOnline ? 'Online' : 'Local Mode'}</span>
               </div>
             </div>
-        </div>
-        {currentUser && (
-          <div className="flex items-center gap-4">
-            <div className="hidden md:block text-right">
-              <div className="text-xs font-black text-white uppercase tracking-tight">{currentUser.nome}</div>
-              <div className="text-[9px] text-blue-500 font-black uppercase tracking-widest">{currentUser.perfil}</div>
-            </div>
-            <button 
-              onClick={handleLogout} 
-              className="bg-red-950/20 text-red-400 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border border-red-900/20 hover:bg-red-950/40 transition-all active:scale-95"
-            >
-              Sair
-            </button>
           </div>
-        )}
-      </header>
-      {currentUser && <DriverLocationSender user={currentUser} />}
-      <main className="flex-1 overflow-y-auto p-4 md:p-8 w-full">
-        <PageErrorBoundary onRetry={() => navigate('operation')}>
+          {currentUser && (
+            <div className="flex items-center gap-4">
+              <div className="hidden md:block text-right">
+                <div className="text-xs font-black text-white uppercase tracking-tight">{currentUser.nome}</div>
+                <div className="text-[9px] text-blue-500 font-black uppercase tracking-widest">{currentUser.perfil}</div>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="bg-red-950/20 text-red-400 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border border-red-900/20 hover:bg-red-950/40 transition-all active:scale-95"
+              >
+                Sair
+              </button>
+            </div>
+          )}
+        </header>
+        {currentUser && <DriverLocationSender user={currentUser} />}
+        <main className="flex-1 overflow-y-auto p-4 md:p-8 w-full">
           <React.Suspense fallback={
             <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
               <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
@@ -516,9 +516,9 @@ const App: React.FC = () => {
           }>
             {renderPage()}
           </React.Suspense>
-        </PageErrorBoundary>
-      </main>
-    </div>
+        </main>
+      </div>
+    </PageErrorBoundary>
   );
 };
 
