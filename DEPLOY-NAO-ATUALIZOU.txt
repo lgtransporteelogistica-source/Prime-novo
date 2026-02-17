@@ -1,0 +1,92 @@
+========================================
+  FIZ O UPLOAD E NÃO ATUALIZOU — O QUE FAZER
+========================================
+
+Siga NA ORDEM. Uma dessas coisas costuma resolver.
+
+----------------------------------------
+1. VERCEL — FORÇAR UM NOVO DEPLOY
+----------------------------------------
+
+Às vezes a Vercel não detecta o upload. Force um deploy manual:
+
+• Abra vercel.com e faça login.
+• Clique no seu projeto (Prime Group).
+• Vá na aba "Deployments" (Implantações).
+• No último deploy da lista, clique nos TRÊS PONTINHOS (⋮) ao lado.
+• Clique em "Redeploy" (Reimplantar).
+• Marque "Use existing Build Cache" como DESMARCADO (para build limpo).
+• Clique em "Redeploy" de novo para confirmar.
+
+Aguarde 1–2 minutos. Depois abra o link do app de novo.
+
+----------------------------------------
+2. VERCEL — PASTA DO PROJETO (ROOT DIRECTORY)
+----------------------------------------
+
+Se no GitHub os arquivos estão DENTRO de uma pasta (ex.: prime-projeto-main),
+a Vercel precisa saber onde está o package.json.
+
+• Vercel → seu projeto → "Settings" (Configurações).
+• No menu lateral, clique em "General".
+• Procure "Root Directory".
+• Se estiver em branco e no GitHub você vê uma pasta (ex.: prime-projeto-main)
+  e dentro dela estão App.tsx, package.json, pages, etc., então:
+
+  1. Clique em "Edit" ao lado de Root Directory.
+  2. Digite: prime-projeto-main
+     (ou o nome exato da pasta que contém package.json no GitHub)
+  3. Salve (Save).
+
+• Depois vá em Deployments → três pontinhos no último deploy → Redeploy.
+
+----------------------------------------
+3. CONFERIR O QUE ESTÁ NO GITHUB
+----------------------------------------
+
+• Abra o repositório no GitHub no navegador.
+• Veja a ESTRUTURA: os arquivos estão na RAIZ ou dentro de uma pasta?
+
+  Se na RAIZ você vê: App.tsx, package.json, pages, components...
+  → No Vercel, Root Directory deve ficar EM BRANCO.
+
+  Se na RAIZ você vê só uma pasta (ex.: prime-projeto-main) e ao clicar nela
+  aparecem App.tsx, package.json, pages...
+  → No Vercel, Root Directory = prime-projeto-main
+
+----------------------------------------
+4. CACHE NO CELULAR / NAVEGADOR
+----------------------------------------
+
+• Feche o site/app por completo (feche a aba ou o app).
+• Abra de novo pelo link da Vercel.
+• Ou abra o link em "aba anônima" / "modo privado" para testar sem cache.
+
+No rodapé do app deve aparecer "v2.2.0". Se aparecer "v2.1.1", ainda é cache.
+
+----------------------------------------
+5. SE USOU "UPLOAD FILES" NO GITHUB
+----------------------------------------
+
+Ao arrastar arquivos, você precisa arrastar o CONTEÚDO da pasta do projeto,
+não a pasta vazia.
+
+• Abra no PC:
+  C:\Users\USER\Desktop\Nova pasta\prime-projeto-main\prime-projeto-main
+
+• Dentro dela você deve ver: App.tsx, index.html, package.json, pages,
+  components, ENVIAR-PARA-GITHUB.bat, etc.
+
+• Selecione TUDO que está DENTRO (Ctrl+A), desmarque node_modules.
+• Arraste para o GitHub. Se no GitHub já existia uma pasta "prime-projeto-main",
+  arraste DENTRO dessa pasta (substituindo o conteúdo) ou confira se a raiz
+  do repositório ficou com App.tsx, package.json, etc. na raiz.
+
+========================================
+
+RESUMO RÁPIDO:
+1) Vercel → Deployments → Redeploy (sem cache).
+2) Vercel → Settings → Root Directory = pasta certa (ou vazio se app na raiz).
+3) Fechar o site e abrir de novo; testar em aba anônima.
+
+========================================
