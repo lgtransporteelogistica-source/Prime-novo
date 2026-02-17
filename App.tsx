@@ -47,61 +47,27 @@ const App: React.FC = () => {
   const [session, setSession] = useState<UserSession | null>(null);
   const [currentPage, setCurrentPage] = useState<string>('login');
 
-  // Estados dos Dados com Inicialização do LocalStorage
-  const [users, setUsers] = useState<User[]>(() => {
-    const saved = localStorage.getItem('pg_users');
-    return saved ? JSON.parse(saved) : INITIAL_USERS;
-  });
+  const safeParse = <T,>(key: string, fallback: T): T => {
+    try {
+      const saved = typeof localStorage !== 'undefined' ? localStorage.getItem(key) : null;
+      return saved ? (JSON.parse(saved) as T) : fallback;
+    } catch {
+      return fallback;
+    }
+  };
 
-  const [vehicles, setVehicles] = useState<Vehicle[]>(() => {
-    const saved = localStorage.getItem('pg_vehicles');
-    return saved ? JSON.parse(saved) : INITIAL_VEHICLES;
-  });
-
-  const [customers, setCustomers] = useState<Customer[]>(() => {
-    const saved = localStorage.getItem('pg_customers');
-    return saved ? JSON.parse(saved) : INITIAL_CUSTOMERS;
-  });
-
-  const [fuelings, setFuelings] = useState<Fueling[]>(() => {
-    const saved = localStorage.getItem('pg_fuelings');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [maintenances, setMaintenances] = useState<MaintenanceRequest[]>(() => {
-    const saved = localStorage.getItem('pg_maintenances');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [routes, setRoutes] = useState<RouteDeparture[]>(() => {
-    const saved = localStorage.getItem('pg_routes');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [dailyRoutes, setDailyRoutes] = useState<DailyRoute[]>(() => {
-    const saved = localStorage.getItem('pg_daily_routes');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [fixedExpenses, setFixedExpenses] = useState<FixedExpense[]>(() => {
-    const saved = localStorage.getItem('pg_fixed_expenses');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [agregados, setAgregados] = useState<Agregado[]>(() => {
-    const saved = localStorage.getItem('pg_agregados');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [agregadoFreights, setAgregadoFreights] = useState<AgregadoFreight[]>(() => {
-    const saved = localStorage.getItem('pg_agregado_freights');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [tolls, setTolls] = useState<Toll[]>(() => {
-    const saved = localStorage.getItem('pg_tolls');
-    return saved ? JSON.parse(saved) : [];
-  });
+  // Estados dos Dados com Inicialização do LocalStorage (parse seguro para não travar na abertura)
+  const [users, setUsers] = useState<User[]>(() => safeParse('pg_users', INITIAL_USERS));
+  const [vehicles, setVehicles] = useState<Vehicle[]>(() => safeParse('pg_vehicles', INITIAL_VEHICLES));
+  const [customers, setCustomers] = useState<Customer[]>(() => safeParse('pg_customers', INITIAL_CUSTOMERS));
+  const [fuelings, setFuelings] = useState<Fueling[]>(() => safeParse('pg_fuelings', []));
+  const [maintenances, setMaintenances] = useState<MaintenanceRequest[]>(() => safeParse('pg_maintenances', []));
+  const [routes, setRoutes] = useState<RouteDeparture[]>(() => safeParse('pg_routes', []));
+  const [dailyRoutes, setDailyRoutes] = useState<DailyRoute[]>(() => safeParse('pg_daily_routes', []));
+  const [fixedExpenses, setFixedExpenses] = useState<FixedExpense[]>(() => safeParse('pg_fixed_expenses', []));
+  const [agregados, setAgregados] = useState<Agregado[]>(() => safeParse('pg_agregados', []));
+  const [agregadoFreights, setAgregadoFreights] = useState<AgregadoFreight[]>(() => safeParse('pg_agregado_freights', []));
+  const [tolls, setTolls] = useState<Toll[]>(() => safeParse('pg_tolls', []));
 
   const [dbOnline, setDbOnline] = useState(false);
   const [syncStatus, setSyncStatus] = useState<'idle' | 'sending' | 'ok' | 'fail'>('idle');
@@ -227,9 +193,12 @@ const App: React.FC = () => {
     return () => clearInterval(interval);
   }, [currentUser?.id, currentUser?.perfil]);
 
-  // Carregar dados ao montar: se tem lançamento pendente (reload após enviar), só aplica o pendente e NÃO sobrescreve com Supabase (mantém exclusões e dados locais)
+  // Carregar dados ao montar (após primeira pintura para evitar tela preta)
   useEffect(() => {
-    const hasPending =
+    let cancelled = false;
+    const run = () => {
+      if (cancelled) return;
+      const hasPending =
       localStorage.getItem('pg_pending_fueling') ||
       localStorage.getItem('pg_pending_maintenance') ||
       localStorage.getItem('pg_pending_daily_route');
@@ -319,22 +288,24 @@ const App: React.FC = () => {
     if (!supabase) return;
     loadAllFromSupabase(supabase)
       .then((data) => {
-        if (data) {
-          setUsers(data.users);
-          setVehicles(data.vehicles);
-          setCustomers(data.customers);
-          setFuelings(data.fuelings);
-          setMaintenances(data.maintenances);
-          setRoutes(data.routes);
-          setDailyRoutes(data.dailyRoutes);
-          setFixedExpenses(data.fixedExpenses);
-          setAgregados(data.agregados);
-          setAgregadoFreights(data.agregadoFreights);
-          setTolls(data.tolls);
-          setDbOnline(true);
-        }
+        if (cancelled || !data) return;
+        setUsers(data.users);
+        setVehicles(data.vehicles);
+        setCustomers(data.customers);
+        setFuelings(data.fuelings);
+        setMaintenances(data.maintenances);
+        setRoutes(data.routes);
+        setDailyRoutes(data.dailyRoutes);
+        setFixedExpenses(data.fixedExpenses);
+        setAgregados(data.agregados);
+        setAgregadoFreights(data.agregadoFreights);
+        setTolls(data.tolls);
+        setDbOnline(true);
       })
-      .catch(() => setDbOnline(false));
+      .catch(() => { if (!cancelled) setDbOnline(false); });
+    };
+    const id = requestAnimationFrame(() => run());
+    return () => { cancelled = true; cancelAnimationFrame(id); };
   }, []);
 
   // Persistência: localStorage sempre; Supabase quando online
@@ -359,18 +330,23 @@ const App: React.FC = () => {
     }
   }, [users, vehicles, customers, fuelings, maintenances, routes, dailyRoutes, fixedExpenses, agregados, agregadoFreights, tolls, dbOnline]);
 
-  // Login Persistente
+  // Login Persistente (parse seguro)
   useEffect(() => {
-    const savedUserId = localStorage.getItem('prime_group_user_id');
-    const savedSession = localStorage.getItem('prime_group_session');
-    if (savedUserId) {
-      const user = users.find(u => u.id === savedUserId);
-      if (user && user.ativo) {
-        setCurrentUser(user);
-        if (savedSession) setSession(JSON.parse(savedSession));
-        setCurrentPage('operation');
+    try {
+      const savedUserId = localStorage.getItem('prime_group_user_id');
+      const savedSession = localStorage.getItem('prime_group_session');
+      if (savedUserId) {
+        const user = users.find(u => u.id === savedUserId);
+        if (user && user.ativo) {
+          setCurrentUser(user);
+          if (savedSession) {
+            const parsed = JSON.parse(savedSession);
+            setSession(parsed);
+          }
+          setCurrentPage('operation');
+        }
       }
-    }
+    } catch (_) {}
   }, []);
 
   const navigate = (page: string) => {
