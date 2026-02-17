@@ -11,6 +11,10 @@ import { DriverLocationSender } from './components/DriverLocationSender';
 import { supabase, isSupabaseOnline } from './supabase';
 import { loadAllFromSupabase, syncAllToSupabase } from './supabase/sync';
 import OperationHome from './pages/OperationHome';
+import DriverDailyRoute from './pages/DriverDailyRoute';
+import VehicleSelection from './pages/VehicleSelection';
+import FuelingForm from './pages/FuelingForm';
+import MaintenanceForm from './pages/MaintenanceForm';
 
 /** Evita tela preta quando um componente ou lazy load falha. */
 class PageErrorBoundary extends React.Component<{ children: React.ReactNode; onRetry: () => void }> {
@@ -320,10 +324,8 @@ const App: React.FC = () => {
     setVehicles(prev => [...prev, v]);
   };
 
-  // Lazy Pages (OperationHome é import estático para evitar tela preta no celular ao voltar da rota)
+  // Lazy Pages (OperationHome, DriverDailyRoute, VehicleSelection, FuelingForm e MaintenanceForm são estáticos para evitar tela preta no celular)
   const Login = React.lazy(() => import('./pages/Login'));
-  const FuelingForm = React.lazy(() => import('./pages/FuelingForm'));
-  const MaintenanceForm = React.lazy(() => import('./pages/MaintenanceForm'));
   const RouteForm = React.lazy(() => import('./pages/RouteForm'));
   const MyRequests = React.lazy(() => import('./pages/MyRequests'));
   const MyRoutes = React.lazy(() => import('./pages/MyRoutes'));
@@ -331,7 +333,6 @@ const App: React.FC = () => {
   const AdminPending = React.lazy(() => import('./pages/AdminPending'));
   const UserManagement = React.lazy(() => import('./pages/UserManagement'));
   const VehicleManagement = React.lazy(() => import('./pages/VehicleManagement'));
-  const DriverDailyRoute = React.lazy(() => import('./pages/DriverDailyRoute'));
   const AdminVehicleReport = React.lazy(() => import('./pages/AdminVehicleReport'));
   const AdminActivityReport = React.lazy(() => import('./pages/AdminActivityReport'));
   const AdminChecklistReport = React.lazy(() => import('./pages/AdminChecklistReport'));
@@ -339,7 +340,6 @@ const App: React.FC = () => {
   const AdminTracking = React.lazy(() => import('./pages/AdminTracking'));
   const AdminDriverLive = React.lazy(() => import('./pages/AdminDriverLive'));
   const AdminConsolidatedFinancialReport = React.lazy(() => import('./pages/AdminConsolidatedFinancialReport'));
-  const VehicleSelection = React.lazy(() => import('./pages/VehicleSelection'));
   const AdminCustomerManagement = React.lazy(() => import('./pages/AdminCustomerManagement'));
   const AdminAgregadoManagement = React.lazy(() => import('./pages/AdminAgregadoManagement'));
   const AdminAgregadoFreight = React.lazy(() => import('./pages/AdminAgregadoFreight'));
@@ -375,8 +375,8 @@ const App: React.FC = () => {
     }
 
     switch (currentPage) {
-      case 'fueling': return <FuelingForm session={session!} user={currentUser} onBack={() => navigate('operation')} onSubmit={(f) => { saveRecord(setFuelings, f); navigate('operation'); }} />;
-      case 'maintenance': return <MaintenanceForm session={session!} user={currentUser} onBack={() => navigate('operation')} onSubmit={(m) => { saveRecord(setMaintenances, m); navigate('operation'); }} />;
+      case 'fueling': return <FuelingForm session={session!} user={currentUser} onBack={() => navigate('operation')} onSubmit={(f) => { try { saveRecord(setFuelings, f); } finally { setTimeout(() => navigate('operation'), 0); } }} />;
+      case 'maintenance': return <MaintenanceForm session={session!} user={currentUser} onBack={() => navigate('operation')} onSubmit={(m) => { try { saveRecord(setMaintenances, m); } finally { setTimeout(() => navigate('operation'), 0); } }} />;
       case 'route': return <RouteForm session={session!} user={currentUser} drivers={users.filter(u => u.perfil === UserRole.MOTORISTA)} customers={customers} onBack={() => navigate('operation')} onSubmit={(r) => { saveRecord(setRoutes, r); navigate('operation'); }} />;
       case 'daily-route': return <DriverDailyRoute session={session!} user={currentUser} customers={customers} onBack={() => navigate('operation')} onSubmit={(dr) => { try { saveRecord(setDailyRoutes, dr); } finally { setTimeout(() => navigate('operation'), 0); } }} />;
       case 'helper-binding': return <HelperRouteBinding session={session!} user={currentUser} dailyRoutes={dailyRoutes} users={users} onBack={() => navigate('operation')} onBind={(rId) => { updateRecord(setDailyRoutes, rId, { ajudanteId: currentUser.id, ajudanteNome: currentUser.nome }); navigate('operation'); }} />;
