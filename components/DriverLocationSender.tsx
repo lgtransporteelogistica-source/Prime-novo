@@ -1,71 +1,44 @@
-/**
- * Envia a localização do celular do motorista para o Supabase em tempo real.
- * Só atua quando o usuário logado é motorista e o Supabase está configurado.
- */
-
 import React, { useEffect, useRef } from 'react';
-import { supabase } from '../supabase';
-import { pushDriverLocation } from '../supabase/driverLocation';
 import { User, UserRole } from '../types';
+import { pushDriverLocation } from '../supabase/driverLocation';
 
-const INTERVAL_MS = 25 * 1000; // 25 segundos (economia de bateria)
+const INTERVAL_MS = 15000;
 
 interface DriverLocationSenderProps {
-  user: User | null;
+  user: User;
 }
 
 export const DriverLocationSender: React.FC<DriverLocationSenderProps> = ({ user }) => {
-  const watchIdRef = useRef<number | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    if (!user || user.perfil !== UserRole.MOTORISTA || !supabase) return;
-    if (!('geolocation' in navigator)) return;
+    if (user.perfil !== UserRole.MOTORISTA) return;
 
-    const sendPosition = (position: GeolocationPosition) => {
-      pushDriverLocation(
-        supabase,
-        user.id,
-        position.coords.latitude,
-        position.coords.longitude,
-        position.coords.accuracy ?? undefined
+    const send = () => {
+      if (!navigator.geolocation) return;
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          pushDriverLocation(
+            user.id,
+            user.nome,
+            pos.coords.latitude,
+            pos.coords.longitude,
+            pos.coords.accuracy != null ? pos.coords.accuracy : undefined
+          );
+        },
+        (err) => {
+          console.warn('[DriverLocation] Erro ao obter localização:', err.message);
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 }
       );
     };
 
-    const onError = (err: GeolocationPositionError) => {
-      console.warn('[DriverLocation] Erro ao obter localização:', err.message);
-    };
-
-    // Usar getCurrentPosition em intervalo para economizar bateria (em vez de watchPosition contínuo)
-    const tick = () => {
-      navigator.geolocation.getCurrentPosition(sendPosition, onError, {
-        enableHighAccuracy: true,
-        maximumAge: 60000,
-        timeout: 10000,
-      });
-    };
-
-    // Primeira posição após permissão
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        sendPosition(pos);
-        intervalRef.current = setInterval(tick, INTERVAL_MS);
-      },
-      onError,
-      { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }
-    );
-
+    send();
+    intervalRef.current = setInterval(send, INTERVAL_MS);
     return () => {
-      if (watchIdRef.current != null) {
-        navigator.geolocation.clearWatch(watchIdRef.current);
-        watchIdRef.current = null;
-      }
-      if (intervalRef.current != null) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
+      if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [user?.id, user?.perfil]);
+  }, [user.id, user.nome, user.perfil]);
 
   return null;
 };

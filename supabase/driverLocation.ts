@@ -1,16 +1,16 @@
 /**
- * Envio e leitura de localização em tempo real dos motoristas (GPS do celular).
+ * Envio e leitura de localização em tempo real dos motoristas.
  * Requer tabela driver_locations no Supabase (migration 00004).
  */
 
-import type { SupabaseClient } from '@supabase/supabase-js';
+import { supabase } from '../supabase';
 import type { DriverLocation } from '../types';
 
 const TABLE = 'driver_locations';
 
 export async function pushDriverLocation(
-  supabase: SupabaseClient | null,
   userId: string,
+  userName: string | undefined,
   lat: number,
   lng: number,
   accuracy?: number
@@ -21,45 +21,41 @@ export async function pushDriverLocation(
       user_id: userId,
       lat,
       lng,
-      accuracy: accuracy ?? null,
-      updated_at: new Date().toISOString(),
+      accuracy: accuracy != null ? accuracy : null,
+      updated_at: new Date().toISOString()
     },
     { onConflict: 'user_id' }
   );
 }
 
-export async function fetchDriverLocations(
-  supabase: SupabaseClient | null
-): Promise<DriverLocation[]> {
+export async function fetchDriverLocations(): Promise<DriverLocation[]> {
   if (!supabase) return [];
   const { data, error } = await supabase
     .from(TABLE)
-    .select('user_id, lat, lng, accuracy, updated_at')
+    .select('*')
     .order('updated_at', { ascending: false });
   if (error) return [];
-  return (data ?? []).map((row: any) => ({
+  return (data || []).map((row: { user_id: string; lat: number; lng: number; accuracy?: number; updated_at: string }) => ({
     userId: row.user_id,
-    lat: Number(row.lat),
-    lng: Number(row.lng),
-    accuracy: row.accuracy != null ? Number(row.accuracy) : undefined,
-    updatedAt: row.updated_at,
+    lat: row.lat,
+    lng: row.lng,
+    accuracy: row.accuracy,
+    updatedAt: row.updated_at
   }));
 }
 
 export function subscribeDriverLocations(
-  supabase: SupabaseClient | null,
+  client: ReturnType<typeof import('../supabase').supabase>,
   onPayload: (locations: DriverLocation[]) => void
 ): () => void {
-  if (!supabase) return () => {};
-  const fetch = () => fetchDriverLocations(supabase).then(onPayload);
+  if (!client) return () => {};
+  const fetch = () => fetchDriverLocations().then(onPayload);
   fetch();
-  const channel = supabase
+  const channel = client
     .channel('driver_locations_changes')
-    .on('postgres_changes', { event: '*', schema: 'public', table: TABLE }, () => {
-      fetch();
-    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: TABLE }, fetch)
     .subscribe();
   return () => {
-    supabase.removeChannel(channel);
+    channel.unsubscribe();
   };
 }
