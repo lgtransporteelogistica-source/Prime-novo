@@ -262,9 +262,7 @@ const App: React.FC = () => {
       return;
     }
 
-    // Sem pendente: carrega do Supabase
-    // fuelings, maintenances e dailyRoutes: só sobrescreve se o localStorage estiver vazio (ex.: outro dispositivo)
-    // senão usa o localStorage para não trazer de volta pendências que você já excluiu
+    // Sem pendente: carrega tudo do Supabase (admin vê o que o motorista lançou)
     if (!supabase) return;
     loadAllFromSupabase(supabase)
       .then((data) => {
@@ -272,18 +270,15 @@ const App: React.FC = () => {
           setUsers(data.users);
           setVehicles(data.vehicles);
           setCustomers(data.customers);
+          setFuelings(data.fuelings);
+          setMaintenances(data.maintenances);
           setRoutes(data.routes);
+          setDailyRoutes(data.dailyRoutes);
           setFixedExpenses(data.fixedExpenses);
           setAgregados(data.agregados);
           setAgregadoFreights(data.agregadoFreights);
           setTolls(data.tolls);
           setDbOnline(true);
-          const lf = localStorage.getItem('pg_fuelings');
-          const lm = localStorage.getItem('pg_maintenances');
-          const ld = localStorage.getItem('pg_daily_routes');
-          if (!lf || lf === '[]') setFuelings(data.fuelings);
-          if (!lm || lm === '[]') setMaintenances(data.maintenances);
-          if (!ld || ld === '[]') setDailyRoutes(data.dailyRoutes);
         }
       })
       .catch(() => setDbOnline(false));
