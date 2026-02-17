@@ -1,65 +1,7 @@
-========================================
-  COMO FAZER DEPLOY DESTA ATUALIZAÇÃO
-========================================
-
-Você tem duas opções: com Git (recomendado) ou pelo site do GitHub.
-
-----------------------------------------
-OPÇÃO 1 — COM GIT (TERMINAL) — RECOMENDADO
-----------------------------------------
-
-Se o seu projeto na Vercel está ligado ao GitHub, basta enviar as alterações.
-A Vercel faz o deploy sozinha quando você der push.
-
-1. Abra o PowerShell ou o Terminal no VS Code (Terminal > Novo Terminal).
-
-2. Vá até a pasta do repositório (onde está a pasta .git):
-
-   cd "C:\Users\USER\Desktop\Nova pasta\prime-projeto-main"
-
-3. Adicione os arquivos alterados:
-
-   git add prime-projeto-main/App.tsx prime-projeto-main/pages/DriverDailyRoute.tsx
-
-   (Se quiser subir TUDO que mudou, use: git add .)
-
-4. Faça o commit:
-
-   git commit -m "Corrige tela preta ao iniciar rota do motorista"
-
-5. Envie para o GitHub:
-
-   git push origin main
-
-6. Pronto. A Vercel vai detectar o push e fazer um novo deploy em 1–2 minutos.
-   Acesse o painel da Vercel ou o link do app para ver quando terminar.
-
-----------------------------------------
-OPÇÃO 2 — PELO SITE DO GITHUB (SEM TERMINAL)
-----------------------------------------
-
-Use o mesmo método do arquivo SUBIR-PARA-GITHUB.txt:
-
-1. Abra a pasta do projeto no Explorador de Arquivos:
-
-   C:\Users\USER\Desktop\Nova pasta\prime-projeto-main\prime-projeto-main
-
-2. Selecione TUDO (Ctrl+A) e DESMARQUE a pasta node_modules (Ctrl+clique nela).
-
-3. Abra o repositório no GitHub no navegador (ex.: github.com/.../Prime-novo).
-
-4. Arraste os arquivos selecionados para a área de upload do GitHub.
-   (O GitHub vai pedir uma mensagem de commit; escreva por exemplo: "Atualização - correção tela preta".)
-
-5. Depois do upload, se a Vercel estiver ligada a esse repositório, ela fará
-   um novo deploy automaticamente. Caso contrário, no painel da Vercel clique
-   em "Redeploy" no projeto para forçar um novo build.
-
-----------------------------------------
-VERIFICAR O DEPLOY
-----------------------------------------
-
-- Vercel: vercel.com > seu projeto > Deployments (ver se o último está "Ready").
-- Abra o link do app no celular ou no PC e teste de novo "Rota do Dia" > preencher > Iniciar rota.
-
-========================================
+{
+  "name": "PRIME GROUP - Operação Transportadora",
+  "description": "Sistema interno para gestão operacional de frotas, abastecimento, manutenção e rotas da PRIME GROUP.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}

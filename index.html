@@ -1,74 +1,61 @@
-========================================
-  JÁ TENHO PROJETO NO SUPABASE – DEIXAR ONLINE
-========================================
 
-Siga na ordem. No final o app estará no ar usando a base de dados.
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PRIME GROUP - Gestão Operacional</title>
+    <link rel="icon" type="image/png" href="/logo.png" />
+    <meta name="theme-color" content="#020617">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #020617;
+            color: #f8fafc;
+            margin: 0;
+            padding: 0;
+        }
+        ::-webkit-scrollbar { width: 0px; background: transparent; }
+        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
+        
+        @keyframes slideDown { from { transform: translateY(-10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .animate-slideDown { animation: slideDown 0.3s ease-out; }
 
-----------------------------------------
-ETAPA 1 – TABELAS NO SUPABASE (só se ainda não rodou)
-----------------------------------------
+        @media print {
+          .no-print { display: none !important; }
+          body { background: white; color: black; }
+          .card-report { border: 1px solid #ddd !important; background: white !important; color: black !important; }
+        }
 
-1. Entre no seu projeto: https://supabase.com/dashboard
-2. Menu esquerdo: SQL Editor → "+ New query"
-3. No seu PC, abra a pasta:
-   C:\Users\USER\Desktop\Nova pasta\prime-projeto-main\prime-projeto-main\supabase\migrations
-
-4. Para cada arquivo, NA ORDEM:
-   • Abra o arquivo → Ctrl+A, Ctrl+C (copiar tudo)
-   • Cole no SQL Editor do Supabase → Run
-   • Apague o texto e vá para o próximo
-
-   Ordem: 00001_initial_schema.sql → 00002_daily_routes_avaria.sql → 00003_fixed_expenses_dia_vencimento.sql → 00004_driver_locations.sql
-
-Se já rodou os 4, pule para a Etapa 2.
-
-----------------------------------------
-ETAPA 2 – COPIAR URL E CHAVE DO SUPABASE
-----------------------------------------
-
-1. No Supabase: menu esquerdo → Project Settings (engrenagem)
-2. Clique em "API"
-3. Copie e guarde:
-   • Project URL (ex.: https://xxxxx.supabase.co)
-   • Em "Project API keys", a chave "anon" "public" (começa com eyJ...)
-
-----------------------------------------
-ETAPA 3 – COLOCAR NA VERCEL
-----------------------------------------
-
-1. Acesse https://vercel.com e abra o seu projeto (ex.: Prime-novo)
-2. Menu: Settings → Environment Variables
-3. Adicione a primeira variável:
-   • Key:   VITE_SUPABASE_URL
-   • Value: (cole a Project URL do Supabase)
-   • Marque: Production, Preview, Development
-   • Save
-
-4. Adicione a segunda:
-   • Key:   VITE_SUPABASE_ANON_KEY
-   • Value: (cole a chave anon public do Supabase)
-   • Marque: Production, Preview, Development
-   • Save
-
-5. Fazer novo deploy:
-   • Menu: Deployments
-   • No último deploy, clique nos três pontinhos (...) → Redeploy
-   • Confirme e aguarde terminar (1–2 min)
-
-----------------------------------------
-ETAPA 4 – TESTAR
-----------------------------------------
-
-1. No projeto na Vercel, clique no link do app (ex.: https://prime-novo.vercel.app)
-2. O app deve abrir e mostrar "Online" no topo (verde)
-3. Faça login – os dados passam a ser salvos na base do Supabase
-
-Se aparecer "Local Mode", confira se o nome das variáveis está exatamente:
-VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY (sem espaço, com VITE_ no início).
-Depois faça Redeploy de novo.
-
-========================================
-
-RESUMO: Supabase (rodar 4 migrations + copiar URL e chave) → Vercel (Settings > Environment Variables > as duas variáveis > Redeploy) → Abrir o link do app e ver "Online".
-
-========================================
+        .pulse-emerald {
+          animation: pulse-emerald 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse-emerald {
+          0%, 100% { opacity: 1; }
+          50% { opacity: .5; }
+        }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.2.4",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "react/": "https://esm.sh/react@^19.2.4/",
+    "recharts": "https://esm.sh/recharts@^3.7.0",
+    "lucide-react": "https://esm.sh/lucide-react@0.469.0",
+    "vite": "https://esm.sh/vite@^7.3.1",
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.4",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.45.0"
+  }
+}
+</script>
+</head>
+<body class="antialiased">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+</body>
+</html>
