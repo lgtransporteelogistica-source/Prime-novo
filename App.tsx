@@ -284,6 +284,34 @@ const App: React.FC = () => {
     }
   }, []);
 
+  // Aplicar lançamentos pendentes após reload (evita tela preta no celular ao enviar)
+  useEffect(() => {
+    const pf = localStorage.getItem('pg_pending_fueling');
+    if (pf) {
+      try {
+        const data = JSON.parse(pf);
+        setFuelings(prev => [data, ...prev]);
+      } catch (_) {}
+      localStorage.removeItem('pg_pending_fueling');
+    }
+    const pm = localStorage.getItem('pg_pending_maintenance');
+    if (pm) {
+      try {
+        const data = JSON.parse(pm);
+        setMaintenances(prev => [data, ...prev]);
+      } catch (_) {}
+      localStorage.removeItem('pg_pending_maintenance');
+    }
+    const pdr = localStorage.getItem('pg_pending_daily_route');
+    if (pdr) {
+      try {
+        const data = JSON.parse(pdr);
+        setDailyRoutes(prev => [data, ...prev]);
+      } catch (_) {}
+      localStorage.removeItem('pg_pending_daily_route');
+    }
+  }, []);
+
   const navigate = (page: string) => {
     setCurrentPage(page);
     window.scrollTo(0, 0);
@@ -375,10 +403,10 @@ const App: React.FC = () => {
     }
 
     switch (currentPage) {
-      case 'fueling': return <FuelingForm session={session!} user={currentUser} onBack={() => navigate('operation')} onSubmit={(f) => { navigate('operation'); setTimeout(() => { try { saveRecord(setFuelings, f); } catch (_) {} }, 300); }} />;
-      case 'maintenance': return <MaintenanceForm session={session!} user={currentUser} onBack={() => navigate('operation')} onSubmit={(m) => { navigate('operation'); setTimeout(() => { try { saveRecord(setMaintenances, m); } catch (_) {} }, 300); }} />;
+      case 'fueling': return <FuelingForm session={session!} user={currentUser} onBack={() => navigate('operation')} onSubmit={(f) => { try { localStorage.setItem('pg_pending_fueling', JSON.stringify(f)); } catch (_) {} window.location.reload(); }} />;
+      case 'maintenance': return <MaintenanceForm session={session!} user={currentUser} onBack={() => navigate('operation')} onSubmit={(m) => { try { localStorage.setItem('pg_pending_maintenance', JSON.stringify(m)); } catch (_) {} window.location.reload(); }} />;
       case 'route': return <RouteForm session={session!} user={currentUser} drivers={users.filter(u => u.perfil === UserRole.MOTORISTA)} customers={customers} onBack={() => navigate('operation')} onSubmit={(r) => { navigate('operation'); setTimeout(() => { try { saveRecord(setRoutes, r); } catch (_) {} }, 300); }} />;
-      case 'daily-route': return <DriverDailyRoute key="daily-route" session={session!} user={currentUser} customers={customers} onBack={() => navigate('operation')} onSubmit={(dr) => { navigate('operation'); setTimeout(() => { try { saveRecord(setDailyRoutes, dr); } catch (_) {} }, 300); }} />;
+      case 'daily-route': return <DriverDailyRoute key="daily-route" session={session!} user={currentUser} customers={customers} onBack={() => navigate('operation')} onSubmit={(dr) => { try { localStorage.setItem('pg_pending_daily_route', JSON.stringify(dr)); } catch (_) {} window.location.reload(); }} />;
       case 'helper-binding': return <HelperRouteBinding session={session!} user={currentUser} dailyRoutes={dailyRoutes} users={users} onBack={() => navigate('operation')} onBind={(rId) => { updateRecord(setDailyRoutes, rId, { ajudanteId: currentUser.id, ajudanteNome: currentUser.nome }); navigate('operation'); }} />;
       case 'select-vehicle': return <VehicleSelection vehicles={vehicles} onSelect={(vId, pl) => { const s = { userId: currentUser.id, vehicleId: vId, placa: pl, updatedAt: new Date().toISOString() }; setSession(s); localStorage.setItem('prime_group_session', JSON.stringify(s)); navigate('operation'); }} onBack={() => navigate('operation')} />;
       case 'my-requests': return <MyRequests fuelings={fuelings.filter(f => f.motoristaId === currentUser.id)} maintenances={maintenances.filter(m => m.motoristaId === currentUser.id)} onBack={() => navigate('operation')} />;
