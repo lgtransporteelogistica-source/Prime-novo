@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { flushSync } from 'react-dom';
 import {
   User, UserSession, UserRole, Fueling, MaintenanceRequest,
   RouteDeparture, Vehicle, DailyRoute, Toll, Customer,
@@ -15,30 +16,6 @@ import DriverDailyRoute from './pages/DriverDailyRoute';
 import VehicleSelection from './pages/VehicleSelection';
 import FuelingForm from './pages/FuelingForm';
 import MaintenanceForm from './pages/MaintenanceForm';
-
-/** No celular: primeiro pinta um loading leve, depois monta o formulário pesado. */
-const DailyRouteScreenWrapper: React.FC<{
-  session: import('./types').UserSession;
-  user: import('./types').User;
-  customers: import('./types').Customer[];
-  onBack: () => void;
-  onSubmit: (dr: import('./types').DailyRoute) => void;
-}> = (props) => {
-  const [mounted, setMounted] = React.useState(false);
-  React.useEffect(() => {
-    const t = setTimeout(() => setMounted(true), 50);
-    return () => clearTimeout(t);
-  }, []);
-  if (!mounted) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4">
-        <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
-        <p className="text-slate-500 text-sm">Rota do Dia...</p>
-      </div>
-    );
-  }
-  return <DriverDailyRoute {...props} />;
-};
 
 /** Evita tela preta quando um componente ou lazy load falha. */
 class PageErrorBoundary extends React.Component<{ children: React.ReactNode; onRetry: () => void }> {
@@ -309,7 +286,7 @@ const App: React.FC = () => {
   }, []);
 
   const navigate = (page: string) => {
-    setCurrentPage(page);
+    flushSync(() => setCurrentPage(page));
     window.scrollTo(0, 0);
   };
 
@@ -402,7 +379,7 @@ const App: React.FC = () => {
       case 'fueling': return <FuelingForm session={session!} user={currentUser} onBack={() => navigate('operation')} onSubmit={(f) => { try { saveRecord(setFuelings, f); } finally { setTimeout(() => navigate('operation'), 0); } }} />;
       case 'maintenance': return <MaintenanceForm session={session!} user={currentUser} onBack={() => navigate('operation')} onSubmit={(m) => { try { saveRecord(setMaintenances, m); } finally { setTimeout(() => navigate('operation'), 0); } }} />;
       case 'route': return <RouteForm session={session!} user={currentUser} drivers={users.filter(u => u.perfil === UserRole.MOTORISTA)} customers={customers} onBack={() => navigate('operation')} onSubmit={(r) => { saveRecord(setRoutes, r); navigate('operation'); }} />;
-      case 'daily-route': return <DailyRouteScreenWrapper session={session!} user={currentUser} customers={customers} onBack={() => navigate('operation')} onSubmit={(dr) => { navigate('operation'); setTimeout(() => { try { saveRecord(setDailyRoutes, dr); } catch (_) { /* falha silenciosa */ } }, 0); }} />;
+      case 'daily-route': return <DriverDailyRoute key="daily-route" session={session!} user={currentUser} customers={customers} onBack={() => navigate('operation')} onSubmit={(dr) => { navigate('operation'); requestAnimationFrame(() => { setTimeout(() => { try { saveRecord(setDailyRoutes, dr); } catch (_) { /* falha silenciosa */ } }, 150); }); }} />;
       case 'helper-binding': return <HelperRouteBinding session={session!} user={currentUser} dailyRoutes={dailyRoutes} users={users} onBack={() => navigate('operation')} onBind={(rId) => { updateRecord(setDailyRoutes, rId, { ajudanteId: currentUser.id, ajudanteNome: currentUser.nome }); navigate('operation'); }} />;
       case 'select-vehicle': return <VehicleSelection vehicles={vehicles} onSelect={(vId, pl) => { const s = { userId: currentUser.id, vehicleId: vId, placa: pl, updatedAt: new Date().toISOString() }; setSession(s); localStorage.setItem('prime_group_session', JSON.stringify(s)); navigate('operation'); }} onBack={() => navigate('operation')} />;
       case 'my-requests': return <MyRequests fuelings={fuelings.filter(f => f.motoristaId === currentUser.id)} maintenances={maintenances.filter(m => m.motoristaId === currentUser.id)} onBack={() => navigate('operation')} />;
