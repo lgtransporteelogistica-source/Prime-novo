@@ -1,0 +1,52 @@
+========================================
+  MANEIRA MAIS FÁCIL DE ENVIAR ATUALIZAÇÕES
+========================================
+
+Escolha UMA das duas opções abaixo.
+
+----------------------------------------
+OPÇÃO 1 — UM CLIQUE (se tiver Git instalado)
+----------------------------------------
+
+1. Abra a pasta do projeto no Explorador de Arquivos:
+   C:\Users\USER\Desktop\Nova pasta\prime-projeto-main\prime-projeto-main
+
+2. Dê DOIS CLIQUES no arquivo:
+   ENVIAR-PARA-GITHUB.bat
+
+3. Uma janela preta vai abrir e rodar os comandos.
+   Se der certo, vai aparecer "PRONTO! A Vercel vai fazer o deploy."
+   Feche a janela.
+
+4. Se aparecer "Git não encontrado", use a Opção 2 abaixo.
+
+----------------------------------------
+OPÇÃO 2 — PELO SITE DO GITHUB (sem Git)
+----------------------------------------
+
+1. Abra esta pasta no PC:
+   C:\Users\USER\Desktop\Nova pasta\prime-projeto-main\prime-projeto-main
+
+2. Aperte Ctrl+A (seleciona tudo).
+   Aperte Ctrl e clique na pasta "node_modules" para DESMARCAR ela.
+   Agora está selecionado tudo MENOS node_modules.
+
+3. Abra o site do GitHub no navegador e entre no seu repositório do projeto.
+
+4. Arraste os arquivos que você selecionou e solte na área do GitHub
+   (onde diz "Drag and drop" ou "Arraste arquivos aqui").
+
+5. Role a página até embaixo.
+   Onde pede mensagem do commit, escreva: Atualizacao
+   Clique no botão verde "Commit changes".
+
+6. Pronto. Em 1–2 minutos a Vercel faz o deploy sozinha.
+
+----------------------------------------
+DEPOIS DE ENVIAR
+----------------------------------------
+
+• No celular: feche o app/site por completo e abra de novo pelo link.
+• No rodapé do app deve aparecer "v2.2.0" (versão nova).
+
+========================================

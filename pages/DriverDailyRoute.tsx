@@ -2,6 +2,25 @@ import React, { useState, useRef } from 'react';
 import { User, UserSession, DailyRoute, Customer, FinanceiroStatus } from '../types';
 import { Card, Input, BigButton, Select } from '../components/UI';
 
+/** Se algo quebrar na tela (ex.: no celular), mostra Voltar em vez de tela preta. */
+class DailyRouteErrorBoundary extends React.Component<{ children: React.ReactNode; onBack: () => void }> {
+  state = { hasError: false };
+  static getDerivedStateFromError = () => ({ hasError: true });
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex flex-col items-center justify-center min-h-[50vh] gap-6 p-6 text-center">
+          <p className="text-slate-300 font-medium">Não foi possível abrir o formulário.</p>
+          <button type="button" onClick={this.props.onBack} className="px-6 py-3 rounded-xl bg-blue-600 text-white text-sm font-black uppercase">
+            Voltar
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 interface DriverDailyRouteProps {
   session: UserSession;
   user: User;
@@ -11,6 +30,7 @@ interface DriverDailyRouteProps {
 }
 
 const DriverDailyRoute: React.FC<DriverDailyRouteProps> = ({ session, user, customers, onSubmit, onBack }) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [clienteId, setClienteId] = useState('');
   const [destino, setDestino] = useState('');
   const [oc, setOc] = useState('');
@@ -29,14 +49,48 @@ const DriverDailyRoute: React.FC<DriverDailyRouteProps> = ({ session, user, cust
     fileInputRef.current?.click();
   };
 
+  /** Reduz tamanho da foto para não travar o celular no envio (payload menor). */
+  const compressPhoto = (dataUrl: string, maxWidth = 800, quality = 0.6): Promise<string> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          let { width, height } = img;
+          if (width > maxWidth) {
+            height = (height * maxWidth) / width;
+            width = maxWidth;
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            resolve(dataUrl);
+            return;
+          }
+          ctx.drawImage(img, 0, 0, width, height);
+          const out = canvas.toDataURL('image/jpeg', quality);
+          resolve(out || dataUrl);
+        } catch {
+          resolve(dataUrl);
+        }
+      };
+      img.onerror = () => resolve(dataUrl);
+      img.src = dataUrl;
+    });
+  };
+
   const handlePhotoCaptured = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !file.type.startsWith('image/')) return;
     const reader = new FileReader();
     reader.onload = () => {
       const dataUrl = reader.result as string;
-      pendingSetterRef.current?.(dataUrl);
+      const setter = pendingSetterRef.current;
       pendingSetterRef.current = null;
+      compressPhoto(dataUrl).then((compressed) => {
+        setter?.(compressed);
+      });
     };
     reader.readAsDataURL(file);
     e.target.value = '';
@@ -62,38 +116,45 @@ const DriverDailyRoute: React.FC<DriverDailyRouteProps> = ({ session, user, cust
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!clienteId || !destino || !oc || !isChecklistComplete) return;
+    if (!clienteId || !destino || !oc || !isChecklistComplete || isSubmitting) return;
 
-    const cliente = customers.find(c => c.id === clienteId);
+    setIsSubmitting(true);
 
-    const newDailyRoute: DailyRoute = {
-      id: crypto.randomUUID(),
-      motoristaId: user.id,
-      vehicleId: session.vehicleId,
-      placa: session.placa,
-      clienteId,
-      clienteNome: cliente?.nome,
-      destino,
-      oc,
-      valorFrete: 0,
-      valorMotorista: 0,
-      valorAjudante: 0,
-      statusFinanceiro: FinanceiroStatus.PENDENTE,
-      fotoFrente: fotoFrente || '',
-      fotoLateralEsquerda: fotoLatEsquerda || '',
-      fotoLateralDireita: fotoLatDireita || '',
-      fotoTraseira: fotoTraseira || '',
-      nivelOleo: nivelOleo!,
-      nivelAgua: nivelAgua!,
-      createdAt: new Date().toISOString(),
-      ...(avariaNova && {
-        avariaNova: true,
-        avariaDescricao: avariaDescricao.trim() || undefined,
-        avariaFoto: avariaFoto || undefined
-      })
-    };
+    try {
+      const cliente = (customers ?? []).find(c => c.id === clienteId);
 
-    onSubmit(newDailyRoute);
+      const newDailyRoute: DailyRoute = {
+        id: (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `dr-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        motoristaId: user.id,
+        vehicleId: session.vehicleId,
+        placa: session.placa,
+        clienteId,
+        clienteNome: cliente?.nome,
+        destino,
+        oc,
+        valorFrete: 0,
+        valorMotorista: 0,
+        valorAjudante: 0,
+        statusFinanceiro: FinanceiroStatus.PENDENTE,
+        fotoFrente: fotoFrente || '',
+        fotoLateralEsquerda: fotoLatEsquerda || '',
+        fotoLateralDireita: fotoLatDireita || '',
+        fotoTraseira: fotoTraseira || '',
+        nivelOleo: nivelOleo ?? 'no_nivel',
+        nivelAgua: nivelAgua ?? 'no_nivel',
+        createdAt: new Date().toISOString(),
+        ...(avariaNova && {
+          avariaNova: true,
+          avariaDescricao: avariaDescricao.trim() || undefined,
+          avariaFoto: avariaFoto || undefined
+        })
+      };
+
+      onSubmit(newDailyRoute);
+    } catch (_) {
+      setIsSubmitting(false);
+      onBack();
+    }
   };
 
   const PhotoSlot = ({ label, value, onCapture, onClear }: { label: string; value: string | null; onCapture: () => void; onClear: () => void }) => (
@@ -123,16 +184,17 @@ const DriverDailyRoute: React.FC<DriverDailyRouteProps> = ({ session, user, cust
   );
 
   return (
-    <div className="max-w-2xl mx-auto py-4 animate-fadeIn">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h2 className="text-2xl font-bold">Definir Rota do Dia</h2>
-          <p className="text-slate-500 text-sm">Inspeção e destino para {session.placa}</p>
+    <DailyRouteErrorBoundary onBack={onBack}>
+      <div className="max-w-2xl mx-auto py-4 animate-fadeIn">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h2 className="text-2xl font-bold">Definir Rota do Dia</h2>
+            <p className="text-slate-500 text-sm">Inspeção e destino para {session.placa}</p>
+          </div>
+          <button onClick={onBack} className="text-slate-500 hover:text-slate-200">Cancelar</button>
         </div>
-        <button onClick={onBack} className="text-slate-500 hover:text-slate-200">Cancelar</button>
-      </div>
 
-      <Card className="space-y-8">
+        <Card className="space-y-8">
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Dados da Rota */}
           <div className="space-y-4">
@@ -142,7 +204,7 @@ const DriverDailyRoute: React.FC<DriverDailyRouteProps> = ({ session, user, cust
               label="CLIENTE" 
               value={clienteId} 
               onChange={setClienteId} 
-              options={customers.filter(c => c.ativo).map(c => ({ label: c.nome, value: c.id }))}
+              options={Array.isArray(customers) ? customers.filter(c => c && c.ativo).map(c => ({ label: c.nome || '', value: c.id || '' })) : []}
               required
             />
             
@@ -291,15 +353,16 @@ const DriverDailyRoute: React.FC<DriverDailyRouteProps> = ({ session, user, cust
             )}
             <button
               type="submit"
-              disabled={!clienteId || !destino || !oc || !isChecklistComplete}
-              className={`relative w-full p-6 text-sm font-black uppercase tracking-widest rounded-2xl border-b-4 flex flex-col items-center justify-center gap-4 transition-all active:translate-y-1 active:border-b-0 disabled:opacity-50 disabled:cursor-not-allowed ${isChecklistComplete ? 'bg-blue-700 hover:bg-blue-600 border-blue-600 text-white' : 'bg-slate-800 border-slate-700 text-slate-100'}`}
+              disabled={!clienteId || !destino || !oc || !isChecklistComplete || isSubmitting}
+              className={`relative w-full p-6 text-sm font-black uppercase tracking-widest rounded-2xl border-b-4 flex flex-col items-center justify-center gap-4 transition-all active:translate-y-1 active:border-b-0 disabled:opacity-50 disabled:cursor-not-allowed ${isChecklistComplete && !isSubmitting ? 'bg-blue-700 hover:bg-blue-600 border-blue-600 text-white' : 'bg-slate-800 border-slate-700 text-slate-100'}`}
             >
-              {isChecklistComplete ? "INICIAR ROTA" : "COMPLETE O CHECKLIST"}
+              {isSubmitting ? "ENVIANDO..." : isChecklistComplete ? "INICIAR ROTA" : "COMPLETE O CHECKLIST"}
             </button>
           </div>
         </form>
       </Card>
     </div>
+    </DailyRouteErrorBoundary>
   );
 };
 

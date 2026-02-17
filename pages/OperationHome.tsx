@@ -169,7 +169,7 @@ const OperationHome: React.FC<OperationHomeProps> = ({
         </div>
       )}
 
-      {(session || isAnyAdmin) && (
+      {(session || isAnyAdmin || user.perfil === UserRole.MOTORISTA || user.perfil === UserRole.AJUDANTE) && (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
           {/* Menu para Motoristas */}
           {user.perfil === UserRole.MOTORISTA && (
@@ -249,7 +249,7 @@ const OperationHome: React.FC<OperationHomeProps> = ({
       <div className="pt-12 pb-6 text-center">
         <p className="text-[10px] text-slate-700 font-black uppercase tracking-[0.4em] mb-2">PRIME GROUP OPERATIONAL SYSTEMS</p>
         <div className="flex justify-center gap-4 text-[9px] text-slate-800 font-bold uppercase tracking-widest">
-          <span>v2.1.1</span>
+          <span>v2.2.0</span>
           <span>•</span>
           <span>Encrypted Session</span>
         </div>

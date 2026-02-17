@@ -1,0 +1,85 @@
+========================================
+  SE JÁ FEZ TUDO E AINDA NÃO FUNCIONA
+========================================
+
+Siga esta lista na ordem. Uma dessas coisas costuma ser o problema.
+
+----------------------------------------
+1. VERCEL — PASTA DO PROJETO (ROOT DIRECTORY)
+----------------------------------------
+
+Se no GitHub os arquivos estão DENTRO de uma pasta (ex.: prime-projeto-main),
+a Vercel precisa saber onde está o package.json.
+
+• Acesse vercel.com → seu projeto → Settings.
+• Vá em "General" e procure "Root Directory".
+• Se no GitHub você tem uma pasta tipo "prime-projeto-main" e dentro dela
+  estão App.tsx, package.json, pages, etc., coloque em Root Directory:
+
+    prime-projeto-main
+
+• Salve e faça um novo deploy: Deployments → os três pontinhos do último
+  deploy → Redeploy.
+
+Se no GitHub os arquivos estão na RAIZ do repositório (sem subpasta),
+deixe Root Directory em branco.
+
+----------------------------------------
+2. O QUE VOCÊ ENVIA NO "UPLOAD FILES"
+----------------------------------------
+
+Você deve enviar o CONTEÚDO da pasta do app, não a pasta vazia.
+
+• Abra esta pasta no PC:
+  C:\Users\USER\Desktop\Nova pasta\prime-projeto-main\prime-projeto-main
+
+• Dentro dela você deve ver: App.tsx, index.html, package.json, pages,
+  components, supabase, etc.
+
+• Selecione TUDO que está DENTRO dessa pasta (Ctrl+A).
+• Desmarque só a pasta node_modules (Ctrl+clique nela).
+• Arraste para o GitHub em "Upload files".
+
+No GitHub, depois do upload, na raiz do repositório devem aparecer
+arquivos como: App.tsx, index.html, package.json, e pastas: pages,
+components, public, supabase. Se aparecer uma única pasta
+"prime-projeto-main" e ao entrar nela estiver o App.tsx, então na Vercel
+você precisa colocar Root Directory = prime-projeto-main.
+
+----------------------------------------
+3. CACHE NO CELULAR / NAVEGADOR
+----------------------------------------
+
+O celular ou o navegador podem estar mostrando a versão antiga.
+
+• No celular: feche o app/site completamente (remova da lista de
+  apps recentes). Abra de novo pelo link da Vercel.
+• Ou abra o link em "aba anônima" / "modo privado".
+• No rodapé do app deve aparecer "v2.2.0". Se aparecer "v2.1.1",
+  ainda é a versão antiga (cache).
+
+----------------------------------------
+4. CONFIRMAR QUE O DEPLOY RODOU
+----------------------------------------
+
+• Vercel → seu projeto → Deployments.
+• O último deploy deve estar "Ready" (verde), não "Building" ou "Error".
+• Se estiver "Error", clique nele e veja o log (geralmente erro de
+  build ou pasta errada).
+
+----------------------------------------
+5. LINK CERTO
+----------------------------------------
+
+Use sempre o mesmo link que a Vercel mostra (ex.: seu-app.vercel.app).
+Não use um atalho ou favorito antigo que aponte para outro lugar.
+
+========================================
+
+Resumo rápido:
+1) Vercel → Settings → Root Directory = prime-projeto-main (se for o seu caso).
+2) Redeploy na Vercel.
+3) No celular, fechar o app e abrir de novo (ou aba anônima).
+4) Ver se no rodapé aparece "v2.2.0".
+
+========================================
