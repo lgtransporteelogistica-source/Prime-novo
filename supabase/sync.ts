@@ -121,3 +121,30 @@ export async function syncAllToSupabase(supabase: SupabaseClient, data: AllData)
     throw err.error;
   }
 }
+
+/** Envia só o(s) registro(s) pendente(s) ao Supabase (evita payload gigante). */
+export interface PendingPayload {
+  fueling?: any;
+  maintenance?: any;
+  dailyRoute?: any;
+}
+
+export async function syncPendingOnly(supabase: SupabaseClient, payload: PendingPayload): Promise<void> {
+  const promises: Promise<{ error: any }>[] = [];
+  if (payload.fueling) {
+    promises.push(supabase.from('fuelings').upsert(mapFuelingToDb(payload.fueling), { onConflict: 'id' }));
+  }
+  if (payload.maintenance) {
+    promises.push(supabase.from('maintenance_requests').upsert(mapMaintenanceToDb(payload.maintenance), { onConflict: 'id' }));
+  }
+  if (payload.dailyRoute) {
+    promises.push(supabase.from('daily_routes').upsert(mapDailyRouteToDb(payload.dailyRoute), { onConflict: 'id' }));
+  }
+  if (promises.length === 0) return;
+  const results = await Promise.all(promises);
+  const err = results.find(r => r && r.error);
+  if (err && err.error) {
+    console.error('syncPendingOnly:', err.error);
+    throw err.error;
+  }
+}

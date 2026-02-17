@@ -9,7 +9,7 @@ import { INITIAL_USERS, INITIAL_VEHICLES, INITIAL_CUSTOMERS } from './constants'
 import { Logo } from './components/UI';
 import { DriverLocationSender } from './components/DriverLocationSender';
 import { supabase, isSupabaseOnline } from './supabase';
-import { loadAllFromSupabase, syncAllToSupabase } from './supabase/sync';
+import { loadAllFromSupabase, syncAllToSupabase, syncPendingOnly } from './supabase/sync';
 import OperationHome from './pages/OperationHome';
 import DriverDailyRoute from './pages/DriverDailyRoute';
 import VehicleSelection from './pages/VehicleSelection';
@@ -104,6 +104,8 @@ const App: React.FC = () => {
   });
 
   const [dbOnline, setDbOnline] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<'idle' | 'sending' | 'ok' | 'fail'>('idle');
+  const [pendingNoConnection, setPendingNoConnection] = useState(false);
   const maintenancesRef = useRef<MaintenanceRequest[]>(maintenances);
   const vehiclesRef = useRef<Vehicle[]>(vehicles);
   const lastReminder9Ref = useRef<string>('');
@@ -233,67 +235,67 @@ const App: React.FC = () => {
       localStorage.getItem('pg_pending_daily_route');
 
     if (hasPending && supabase) {
-      const parse = (key: string) => {
-        try { const s = localStorage.getItem(key); return s ? JSON.parse(s) : []; } catch { return []; }
-      };
-      let payload = {
-        users: parse('pg_users'),
-        vehicles: parse('pg_vehicles'),
-        customers: parse('pg_customers'),
-        fuelings: parse('pg_fuelings'),
-        maintenances: parse('pg_maintenances'),
-        routes: parse('pg_routes'),
-        dailyRoutes: parse('pg_daily_routes'),
-        fixedExpenses: parse('pg_fixed_expenses'),
-        agregados: parse('pg_agregados'),
-        agregadoFreights: parse('pg_agregado_freights'),
-        tolls: parse('pg_tolls')
-      };
-
       const pf = localStorage.getItem('pg_pending_fueling');
+      const pm = localStorage.getItem('pg_pending_maintenance');
+      const pdr = localStorage.getItem('pg_pending_daily_route');
+      const pendingPayload: { fueling?: any; maintenance?: any; dailyRoute?: any } = {};
+      let savedPf: string | null = null;
+      let savedPm: string | null = null;
+      let savedPdr: string | null = null;
+
       if (pf) {
         try {
           const data = JSON.parse(pf);
+          pendingPayload.fueling = data;
+          savedPf = pf;
           setFuelings(prev => [data, ...prev]);
           localStorage.removeItem('pg_pending_fueling');
-          payload = { ...payload, fuelings: [data, ...payload.fuelings] };
         } catch (_) { localStorage.removeItem('pg_pending_fueling'); }
       }
-      const pm = localStorage.getItem('pg_pending_maintenance');
       if (pm) {
         try {
           const data = JSON.parse(pm);
+          pendingPayload.maintenance = data;
+          savedPm = pm;
           setMaintenances(prev => [data, ...prev]);
           localStorage.removeItem('pg_pending_maintenance');
-          payload = { ...payload, maintenances: [data, ...payload.maintenances] };
         } catch (_) { localStorage.removeItem('pg_pending_maintenance'); }
       }
-      const pdr = localStorage.getItem('pg_pending_daily_route');
       if (pdr) {
         try {
           const data = JSON.parse(pdr);
+          pendingPayload.dailyRoute = data;
+          savedPdr = pdr;
           setDailyRoutes(prev => [data, ...prev]);
           localStorage.removeItem('pg_pending_daily_route');
-          payload = { ...payload, dailyRoutes: [data, ...payload.dailyRoutes] };
         } catch (_) { localStorage.removeItem('pg_pending_daily_route'); }
       }
+
       setDbOnline(true);
-      // Envia ao Supabase na hora (admin vê ao atualizar); se falhar, recoloca pendente para tentar de novo ao recarregar
-      const savedPf = pf; const savedPm = pm; const savedPdr = pdr;
-      (async () => {
-        try {
-          await syncAllToSupabase(supabase, payload);
-        } catch (e) {
-          console.error('Falha ao sincronizar:', e);
-          if (savedPf) localStorage.setItem('pg_pending_fueling', savedPf);
-          if (savedPm) localStorage.setItem('pg_pending_maintenance', savedPm);
-          if (savedPdr) localStorage.setItem('pg_pending_daily_route', savedPdr);
-        }
-      })();
+      const hasAny = pendingPayload.fueling || pendingPayload.maintenance || pendingPayload.dailyRoute;
+      if (hasAny) {
+        setSyncStatus('sending');
+        (async () => {
+          try {
+            await syncPendingOnly(supabase, pendingPayload);
+            setSyncStatus('ok');
+            setTimeout(() => setSyncStatus('idle'), 4000);
+          } catch (e) {
+            console.error('Falha ao sincronizar:', e);
+            setSyncStatus('fail');
+            if (savedPf) localStorage.setItem('pg_pending_fueling', savedPf);
+            if (savedPm) localStorage.setItem('pg_pending_maintenance', savedPm);
+            if (savedPdr) localStorage.setItem('pg_pending_daily_route', savedPdr);
+            setTimeout(() => setSyncStatus('idle'), 5000);
+          }
+        })();
+      }
       return;
     }
     if (hasPending) {
-      // Sem Supabase: só aplica o pendente
+      // Sem Supabase: só aplica o pendente e avisa
+      setPendingNoConnection(true);
+      setTimeout(() => setPendingNoConnection(false), 6000);
       const pf = localStorage.getItem('pg_pending_fueling');
       if (pf) { try { setFuelings(prev => [JSON.parse(pf), ...prev]); } catch (_) {} localStorage.removeItem('pg_pending_fueling'); }
       const pm = localStorage.getItem('pg_pending_maintenance');
@@ -553,6 +555,22 @@ const App: React.FC = () => {
           </div>
         )}
       </header>
+      {(syncStatus !== 'idle' || pendingNoConnection) && (
+        <div
+          role="alert"
+          className={`px-4 py-3 text-center text-sm font-bold uppercase tracking-wide ${
+            pendingNoConnection ? 'bg-amber-900/60 text-amber-200' :
+            syncStatus === 'sending' ? 'bg-amber-900/60 text-amber-200' :
+            syncStatus === 'ok' ? 'bg-emerald-900/60 text-emerald-200' :
+            'bg-red-900/60 text-red-200'
+          }`}
+        >
+          {pendingNoConnection && 'Lançamento salvo. Sem conexão com o servidor (sem envio ao admin).'}
+          {!pendingNoConnection && syncStatus === 'sending' && 'Enviando lançamento...'}
+          {!pendingNoConnection && syncStatus === 'ok' && 'Enviado. Admin pode atualizar a página para ver.'}
+          {!pendingNoConnection && syncStatus === 'fail' && 'Falha ao enviar. Recarregue a página para tentar de novo.'}
+        </div>
+      )}
       {currentUser && <DriverLocationSender user={currentUser} />}
       <main className="flex-1 overflow-y-auto p-4 md:p-8 w-full">
         <PageErrorBoundary onRetry={() => navigate('operation')}>
