@@ -10,6 +10,7 @@ import { Logo } from './components/UI';
 import { DriverLocationSender } from './components/DriverLocationSender';
 import { supabase, isSupabaseOnline } from './supabase';
 import { loadAllFromSupabase, syncAllToSupabase } from './supabase/sync';
+import OperationHome from './pages/OperationHome';
 
 /** Evita tela preta quando um componente ou lazy load falha. */
 class PageErrorBoundary extends React.Component<{ children: React.ReactNode; onRetry: () => void }> {
@@ -319,9 +320,8 @@ const App: React.FC = () => {
     setVehicles(prev => [...prev, v]);
   };
 
-  // Lazy Pages
+  // Lazy Pages (OperationHome é import estático para evitar tela preta no celular ao voltar da rota)
   const Login = React.lazy(() => import('./pages/Login'));
-  const OperationHome = React.lazy(() => import('./pages/OperationHome'));
   const FuelingForm = React.lazy(() => import('./pages/FuelingForm'));
   const MaintenanceForm = React.lazy(() => import('./pages/MaintenanceForm'));
   const RouteForm = React.lazy(() => import('./pages/RouteForm'));
