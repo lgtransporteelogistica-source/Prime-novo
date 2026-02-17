@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { flushSync } from 'react-dom';
 import {
   User, UserSession, UserRole, Fueling, MaintenanceRequest,
   RouteDeparture, Vehicle, DailyRoute, Toll, Customer,
@@ -286,7 +285,7 @@ const App: React.FC = () => {
   }, []);
 
   const navigate = (page: string) => {
-    flushSync(() => setCurrentPage(page));
+    setCurrentPage(page);
     window.scrollTo(0, 0);
   };
 
@@ -376,10 +375,10 @@ const App: React.FC = () => {
     }
 
     switch (currentPage) {
-      case 'fueling': return <FuelingForm session={session!} user={currentUser} onBack={() => navigate('operation')} onSubmit={(f) => { try { saveRecord(setFuelings, f); } finally { setTimeout(() => navigate('operation'), 0); } }} />;
-      case 'maintenance': return <MaintenanceForm session={session!} user={currentUser} onBack={() => navigate('operation')} onSubmit={(m) => { try { saveRecord(setMaintenances, m); } finally { setTimeout(() => navigate('operation'), 0); } }} />;
-      case 'route': return <RouteForm session={session!} user={currentUser} drivers={users.filter(u => u.perfil === UserRole.MOTORISTA)} customers={customers} onBack={() => navigate('operation')} onSubmit={(r) => { saveRecord(setRoutes, r); navigate('operation'); }} />;
-      case 'daily-route': return <DriverDailyRoute key="daily-route" session={session!} user={currentUser} customers={customers} onBack={() => navigate('operation')} onSubmit={(dr) => { navigate('operation'); requestAnimationFrame(() => { setTimeout(() => { try { saveRecord(setDailyRoutes, dr); } catch (_) { /* falha silenciosa */ } }, 150); }); }} />;
+      case 'fueling': return <FuelingForm session={session!} user={currentUser} onBack={() => navigate('operation')} onSubmit={(f) => { navigate('operation'); setTimeout(() => { try { saveRecord(setFuelings, f); } catch (_) {} }, 300); }} />;
+      case 'maintenance': return <MaintenanceForm session={session!} user={currentUser} onBack={() => navigate('operation')} onSubmit={(m) => { navigate('operation'); setTimeout(() => { try { saveRecord(setMaintenances, m); } catch (_) {} }, 300); }} />;
+      case 'route': return <RouteForm session={session!} user={currentUser} drivers={users.filter(u => u.perfil === UserRole.MOTORISTA)} customers={customers} onBack={() => navigate('operation')} onSubmit={(r) => { navigate('operation'); setTimeout(() => { try { saveRecord(setRoutes, r); } catch (_) {} }, 300); }} />;
+      case 'daily-route': return <DriverDailyRoute key="daily-route" session={session!} user={currentUser} customers={customers} onBack={() => navigate('operation')} onSubmit={(dr) => { navigate('operation'); setTimeout(() => { try { saveRecord(setDailyRoutes, dr); } catch (_) {} }, 300); }} />;
       case 'helper-binding': return <HelperRouteBinding session={session!} user={currentUser} dailyRoutes={dailyRoutes} users={users} onBack={() => navigate('operation')} onBind={(rId) => { updateRecord(setDailyRoutes, rId, { ajudanteId: currentUser.id, ajudanteNome: currentUser.nome }); navigate('operation'); }} />;
       case 'select-vehicle': return <VehicleSelection vehicles={vehicles} onSelect={(vId, pl) => { const s = { userId: currentUser.id, vehicleId: vId, placa: pl, updatedAt: new Date().toISOString() }; setSession(s); localStorage.setItem('prime_group_session', JSON.stringify(s)); navigate('operation'); }} onBack={() => navigate('operation')} />;
       case 'my-requests': return <MyRequests fuelings={fuelings.filter(f => f.motoristaId === currentUser.id)} maintenances={maintenances.filter(m => m.motoristaId === currentUser.id)} onBack={() => navigate('operation')} />;
