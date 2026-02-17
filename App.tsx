@@ -225,8 +225,44 @@ const App: React.FC = () => {
     return () => clearInterval(interval);
   }, [currentUser?.id, currentUser?.perfil]);
 
-  // Carregar dados do Supabase ao montar (se configurado)
+  // Carregar dados ao montar: se tem lançamento pendente (reload após enviar), só aplica o pendente e NÃO sobrescreve com Supabase (mantém exclusões e dados locais)
   useEffect(() => {
+    const hasPending =
+      localStorage.getItem('pg_pending_fueling') ||
+      localStorage.getItem('pg_pending_maintenance') ||
+      localStorage.getItem('pg_pending_daily_route');
+
+    if (hasPending) {
+      // Voltou de um reload após enviar: aplica só o novo registro no estado atual (que veio do localStorage), sem carregar do Supabase
+      const pf = localStorage.getItem('pg_pending_fueling');
+      if (pf) {
+        try {
+          const data = JSON.parse(pf);
+          setFuelings(prev => [data, ...prev]);
+        } catch (_) {}
+        localStorage.removeItem('pg_pending_fueling');
+      }
+      const pm = localStorage.getItem('pg_pending_maintenance');
+      if (pm) {
+        try {
+          const data = JSON.parse(pm);
+          setMaintenances(prev => [data, ...prev]);
+        } catch (_) {}
+        localStorage.removeItem('pg_pending_maintenance');
+      }
+      const pdr = localStorage.getItem('pg_pending_daily_route');
+      if (pdr) {
+        try {
+          const data = JSON.parse(pdr);
+          setDailyRoutes(prev => [data, ...prev]);
+        } catch (_) {}
+        localStorage.removeItem('pg_pending_daily_route');
+      }
+      if (supabase) setDbOnline(true);
+      return;
+    }
+
+    // Sem pendente: carrega do Supabase normalmente (exclusões e tudo vêm do servidor)
     if (!supabase) return;
     loadAllFromSupabase(supabase)
       .then((data) => {
@@ -281,34 +317,6 @@ const App: React.FC = () => {
         if (savedSession) setSession(JSON.parse(savedSession));
         setCurrentPage('operation');
       }
-    }
-  }, []);
-
-  // Aplicar lançamentos pendentes após reload (evita tela preta no celular ao enviar)
-  useEffect(() => {
-    const pf = localStorage.getItem('pg_pending_fueling');
-    if (pf) {
-      try {
-        const data = JSON.parse(pf);
-        setFuelings(prev => [data, ...prev]);
-      } catch (_) {}
-      localStorage.removeItem('pg_pending_fueling');
-    }
-    const pm = localStorage.getItem('pg_pending_maintenance');
-    if (pm) {
-      try {
-        const data = JSON.parse(pm);
-        setMaintenances(prev => [data, ...prev]);
-      } catch (_) {}
-      localStorage.removeItem('pg_pending_maintenance');
-    }
-    const pdr = localStorage.getItem('pg_pending_daily_route');
-    if (pdr) {
-      try {
-        const data = JSON.parse(pdr);
-        setDailyRoutes(prev => [data, ...prev]);
-      } catch (_) {}
-      localStorage.removeItem('pg_pending_daily_route');
     }
   }, []);
 
