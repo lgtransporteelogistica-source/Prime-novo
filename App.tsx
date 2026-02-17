@@ -11,6 +11,32 @@ import { DriverLocationSender } from './components/DriverLocationSender';
 import { supabase, isSupabaseOnline } from './supabase';
 import { loadAllFromSupabase, syncAllToSupabase } from './supabase/sync';
 
+/** Evita tela preta quando um componente ou lazy load falha. */
+class PageErrorBoundary extends React.Component<{ children: React.ReactNode; onRetry: () => void }> {
+  state = { hasError: false };
+  static getDerivedStateFromError = () => ({ hasError: true });
+  componentDidCatch(err: Error) {
+    console.error('PageErrorBoundary:', err);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex flex-col items-center justify-center min-h-[50vh] gap-6 p-6 text-center">
+          <p className="text-slate-300 font-medium">Algo deu errado ao carregar esta tela.</p>
+          <button
+            type="button"
+            onClick={() => { this.setState({ hasError: false }); this.props.onRetry(); }}
+            className="px-6 py-3 rounded-xl bg-blue-600 text-white text-sm font-black uppercase tracking-widest"
+          >
+            Voltar ao início
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [session, setSession] = useState<UserSession | null>(null);
@@ -332,17 +358,27 @@ const App: React.FC = () => {
 
     const isOp = currentUser.perfil === UserRole.MOTORISTA || currentUser.perfil === UserRole.AJUDANTE;
     if (isOp && ['fueling', 'maintenance', 'route', 'daily-route', 'helper-binding'].includes(currentPage) && !session) {
-      return <React.Suspense fallback={null}><VehicleSelection vehicles={vehicles} onSelect={(vId, pl) => {
-        const s = { userId: currentUser.id, vehicleId: vId, placa: pl, updatedAt: new Date().toISOString() };
-        setSession(s); localStorage.setItem('prime_group_session', JSON.stringify(s)); navigate('operation');
-      }} onBack={() => navigate('operation')} /></React.Suspense>;
+      const loadingFallback = (
+        <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4">
+          <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm text-slate-400">Carregando seleção de veículo...</p>
+        </div>
+      );
+      return (
+        <React.Suspense fallback={loadingFallback}>
+          <VehicleSelection vehicles={vehicles} onSelect={(vId, pl) => {
+            const s = { userId: currentUser.id, vehicleId: vId, placa: pl, updatedAt: new Date().toISOString() };
+            setSession(s); localStorage.setItem('prime_group_session', JSON.stringify(s)); navigate('operation');
+          }} onBack={() => navigate('operation')} />
+        </React.Suspense>
+      );
     }
 
     switch (currentPage) {
       case 'fueling': return <FuelingForm session={session!} user={currentUser} onBack={() => navigate('operation')} onSubmit={(f) => { saveRecord(setFuelings, f); navigate('operation'); }} />;
       case 'maintenance': return <MaintenanceForm session={session!} user={currentUser} onBack={() => navigate('operation')} onSubmit={(m) => { saveRecord(setMaintenances, m); navigate('operation'); }} />;
       case 'route': return <RouteForm session={session!} user={currentUser} drivers={users.filter(u => u.perfil === UserRole.MOTORISTA)} customers={customers} onBack={() => navigate('operation')} onSubmit={(r) => { saveRecord(setRoutes, r); navigate('operation'); }} />;
-      case 'daily-route': return <DriverDailyRoute session={session!} user={currentUser} customers={customers} onBack={() => navigate('operation')} onSubmit={(dr) => { saveRecord(setDailyRoutes, dr); navigate('operation'); }} />;
+      case 'daily-route': return <DriverDailyRoute session={session!} user={currentUser} customers={customers} onBack={() => navigate('operation')} onSubmit={(dr) => { try { saveRecord(setDailyRoutes, dr); } finally { setTimeout(() => navigate('operation'), 0); } }} />;
       case 'helper-binding': return <HelperRouteBinding session={session!} user={currentUser} dailyRoutes={dailyRoutes} users={users} onBack={() => navigate('operation')} onBind={(rId) => { updateRecord(setDailyRoutes, rId, { ajudanteId: currentUser.id, ajudanteNome: currentUser.nome }); navigate('operation'); }} />;
       case 'select-vehicle': return <VehicleSelection vehicles={vehicles} onSelect={(vId, pl) => { const s = { userId: currentUser.id, vehicleId: vId, placa: pl, updatedAt: new Date().toISOString() }; setSession(s); localStorage.setItem('prime_group_session', JSON.stringify(s)); navigate('operation'); }} onBack={() => navigate('operation')} />;
       case 'my-requests': return <MyRequests fuelings={fuelings.filter(f => f.motoristaId === currentUser.id)} maintenances={maintenances.filter(m => m.motoristaId === currentUser.id)} onBack={() => navigate('operation')} />;
@@ -442,14 +478,16 @@ const App: React.FC = () => {
       </header>
       {currentUser && <DriverLocationSender user={currentUser} />}
       <main className="flex-1 overflow-y-auto p-4 md:p-8 w-full">
-        <React.Suspense fallback={
-          <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
-            <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-            <div className="text-[10px] font-black animate-pulse text-slate-600 uppercase tracking-[0.3em]">Carregando Sistemas...</div>
-          </div>
-        }>
-          {renderPage()}
-        </React.Suspense>
+        <PageErrorBoundary onRetry={() => navigate('operation')}>
+          <React.Suspense fallback={
+            <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
+              <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+              <div className="text-[10px] font-black animate-pulse text-slate-600 uppercase tracking-[0.3em]">Carregando Sistemas...</div>
+            </div>
+          }>
+            {renderPage()}
+          </React.Suspense>
+        </PageErrorBoundary>
       </main>
     </div>
   );
