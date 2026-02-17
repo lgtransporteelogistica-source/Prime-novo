@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { flushSync } from 'react-dom';
 import {
   User, UserSession, UserRole, Fueling, MaintenanceRequest,
   RouteDeparture, Vehicle, DailyRoute, Toll, Customer,
@@ -27,7 +26,7 @@ class PageErrorBoundary extends React.Component<{ children: React.ReactNode; onR
   render() {
     if (this.state.hasError) {
       return (
-        <div className="flex flex-col items-center justify-center min-h-[50vh] gap-6 p-6 text-center">
+        <div className="flex flex-col items-center justify-center min-h-[50vh] gap-6 p-6 text-center bg-slate-950 rounded-xl">
           <p className="text-slate-300 font-medium">Algo deu errado ao carregar esta tela.</p>
           <button
             type="button"
@@ -286,7 +285,7 @@ const App: React.FC = () => {
   }, []);
 
   const navigate = (page: string) => {
-    flushSync(() => setCurrentPage(page));
+    setCurrentPage(page);
     window.scrollTo(0, 0);
   };
 
@@ -376,10 +375,10 @@ const App: React.FC = () => {
     }
 
     switch (currentPage) {
-      case 'fueling': return <FuelingForm session={session!} user={currentUser} onBack={() => navigate('operation')} onSubmit={(f) => { try { saveRecord(setFuelings, f); } finally { setTimeout(() => navigate('operation'), 0); } }} />;
-      case 'maintenance': return <MaintenanceForm session={session!} user={currentUser} onBack={() => navigate('operation')} onSubmit={(m) => { try { saveRecord(setMaintenances, m); } finally { setTimeout(() => navigate('operation'), 0); } }} />;
+      case 'fueling': return <FuelingForm session={session!} user={currentUser} onBack={() => navigate('operation')} onSubmit={(f) => { saveRecord(setFuelings, f); navigate('operation'); }} />;
+      case 'maintenance': return <MaintenanceForm session={session!} user={currentUser} onBack={() => navigate('operation')} onSubmit={(m) => { saveRecord(setMaintenances, m); navigate('operation'); }} />;
       case 'route': return <RouteForm session={session!} user={currentUser} drivers={users.filter(u => u.perfil === UserRole.MOTORISTA)} customers={customers} onBack={() => navigate('operation')} onSubmit={(r) => { saveRecord(setRoutes, r); navigate('operation'); }} />;
-      case 'daily-route': return <DriverDailyRoute key="daily-route" session={session!} user={currentUser} customers={customers} onBack={() => navigate('operation')} onSubmit={(dr) => { try { saveRecord(setDailyRoutes, dr); } finally { setTimeout(() => navigate('operation'), 0); } }} />;
+      case 'daily-route': return <DriverDailyRoute key="daily-route" session={session!} user={currentUser} customers={customers} onBack={() => navigate('operation')} onSubmit={(dr) => { saveRecord(setDailyRoutes, dr); navigate('operation'); }} />;
       case 'helper-binding': return <HelperRouteBinding session={session!} user={currentUser} dailyRoutes={dailyRoutes} users={users} onBack={() => navigate('operation')} onBind={(rId) => { updateRecord(setDailyRoutes, rId, { ajudanteId: currentUser.id, ajudanteNome: currentUser.nome }); navigate('operation'); }} />;
       case 'select-vehicle': return <VehicleSelection vehicles={vehicles} onSelect={(vId, pl) => { const s = { userId: currentUser.id, vehicleId: vId, placa: pl, updatedAt: new Date().toISOString() }; setSession(s); localStorage.setItem('prime_group_session', JSON.stringify(s)); navigate('operation'); }} onBack={() => navigate('operation')} />;
       case 'my-requests': return <MyRequests fuelings={fuelings.filter(f => f.motoristaId === currentUser.id)} maintenances={maintenances.filter(m => m.motoristaId === currentUser.id)} onBack={() => navigate('operation')} />;
@@ -478,7 +477,7 @@ const App: React.FC = () => {
         )}
       </header>
       {currentUser && <DriverLocationSender user={currentUser} />}
-      <main className="flex-1 overflow-y-auto p-4 md:p-8 w-full">
+      <main className="flex-1 overflow-y-auto p-4 md:p-8 w-full bg-slate-950 min-h-0">
         <PageErrorBoundary onRetry={() => navigate('operation')}>
           <React.Suspense fallback={
             <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
