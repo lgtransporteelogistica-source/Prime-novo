@@ -1,0 +1,63 @@
+========================================
+  COMO VOLTAR O PROJETO AO ESTADO ANTIGO
+  (antes do primeiro deploy ou outro commit)
+========================================
+
+Você tem 2 commits no Git:
+  1. 23b94eb - "first commit" (estado mais antigo)
+  2. 0d3b77a - "Salvar todas as alterações: faturamento, despesas..." (estado antes das nossas alterações recentes)
+
+----------------------------------------
+OPÇÃO A — Só ver como estava (sem mudar nada)
+----------------------------------------
+Abra o terminal na pasta do projeto e digite:
+
+  git show 23b94eb --stat
+
+(mostra o que tinha no "first commit")
+
+  git show 0d3b77a --stat
+
+(mostra o que tinha no commit "Salvar todas as alterações")
+
+----------------------------------------
+OPÇÃO B — Voltar TUDO ao "first commit" (23b94eb)
+----------------------------------------
+CUIDADO: isso apaga as alterações que você tem agora (não commitadas).
+
+  cd "c:\Users\USER\Desktop\Nova pasta\prime-projeto-main\prime-projeto-main"
+  git fetch
+  git checkout 23b94eb -- .
+
+Isso coloca todos os arquivos do projeto iguais ao do primeiro commit.
+Depois você pode commitar: git add . e git commit -m "Voltei ao estado do first commit"
+
+----------------------------------------
+OPÇÃO C — Voltar ao commit "Salvar todas as alterações" (0d3b77a)
+----------------------------------------
+Esse é o estado com faturamento, despesas parceladas, LEAME, Supabase etc., antes das mudanças que deram tela preta.
+
+  cd "c:\Users\USER\Desktop\Nova pasta\prime-projeto-main\prime-projeto-main"
+  git checkout 0d3b77a -- .
+
+Todos os arquivos ficarão como estavam nesse commit.
+Depois: git add . e git commit -m "Revertido ao estado antes das alterações recentes"
+
+----------------------------------------
+OPÇÃO D — Criar uma cópia do projeto antigo (sem perder o atual)
+----------------------------------------
+  cd "c:\Users\USER\Desktop\Nova pasta\prime-projeto-main"
+  xcopy /E /I prime-projeto-main prime-projeto-main-BACKUP
+
+Depois entre na pasta prime-projeto-main-BACKUP e lá dentro rode:
+  git checkout 0d3b77a -- .
+
+Assim você tem duas pastas: a atual e uma cópia no estado antigo.
+
+========================================
+
+Resumo:
+- "Antes do primeiro deploy" = primeiro commit = 23b94eb
+- "Estado bom com tudo que tínhamos antes de estragar" = 0d3b77a
+
+Use a OPÇÃO C se quiser o projeto como estava quando estava "indo bem".

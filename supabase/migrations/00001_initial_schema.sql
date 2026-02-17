@@ -192,26 +192,14 @@ ALTER TABLE agregado_freights ENABLE ROW LEVEL SECURITY;
 ALTER TABLE tolls ENABLE ROW LEVEL SECURITY;
 
 -- Políticas: permitir tudo para anon (o app controla acesso por login interno)
--- DROP IF EXISTS evita erro ao rodar de novo
-DROP POLICY IF EXISTS "Allow all users" ON users;
 CREATE POLICY "Allow all users" ON users FOR ALL USING (true) WITH CHECK (true);
-DROP POLICY IF EXISTS "Allow all customers" ON customers;
 CREATE POLICY "Allow all customers" ON customers FOR ALL USING (true) WITH CHECK (true);
-DROP POLICY IF EXISTS "Allow all vehicles" ON vehicles;
 CREATE POLICY "Allow all vehicles" ON vehicles FOR ALL USING (true) WITH CHECK (true);
-DROP POLICY IF EXISTS "Allow all fixed_expenses" ON fixed_expenses;
 CREATE POLICY "Allow all fixed_expenses" ON fixed_expenses FOR ALL USING (true) WITH CHECK (true);
-DROP POLICY IF EXISTS "Allow all fuelings" ON fuelings;
 CREATE POLICY "Allow all fuelings" ON fuelings FOR ALL USING (true) WITH CHECK (true);
-DROP POLICY IF EXISTS "Allow all maintenance_requests" ON maintenance_requests;
 CREATE POLICY "Allow all maintenance_requests" ON maintenance_requests FOR ALL USING (true) WITH CHECK (true);
-DROP POLICY IF EXISTS "Allow all daily_routes" ON daily_routes;
 CREATE POLICY "Allow all daily_routes" ON daily_routes FOR ALL USING (true) WITH CHECK (true);
-DROP POLICY IF EXISTS "Allow all route_departures" ON route_departures;
 CREATE POLICY "Allow all route_departures" ON route_departures FOR ALL USING (true) WITH CHECK (true);
-DROP POLICY IF EXISTS "Allow all agregados" ON agregados;
 CREATE POLICY "Allow all agregados" ON agregados FOR ALL USING (true) WITH CHECK (true);
-DROP POLICY IF EXISTS "Allow all agregado_freights" ON agregado_freights;
 CREATE POLICY "Allow all agregado_freights" ON agregado_freights FOR ALL USING (true) WITH CHECK (true);
-DROP POLICY IF EXISTS "Allow all tolls" ON tolls;
 CREATE POLICY "Allow all tolls" ON tolls FOR ALL USING (true) WITH CHECK (true);

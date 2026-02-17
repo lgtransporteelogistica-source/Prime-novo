@@ -9,38 +9,7 @@ import { INITIAL_USERS, INITIAL_VEHICLES, INITIAL_CUSTOMERS } from './constants'
 import { Logo } from './components/UI';
 import { DriverLocationSender } from './components/DriverLocationSender';
 import { supabase, isSupabaseOnline } from './supabase';
-import { loadAllFromSupabase, syncAllToSupabase, syncPendingOnly } from './supabase/sync';
-import OperationHome from './pages/OperationHome';
-import DriverDailyRoute from './pages/DriverDailyRoute';
-import VehicleSelection from './pages/VehicleSelection';
-import FuelingForm from './pages/FuelingForm';
-import MaintenanceForm from './pages/MaintenanceForm';
-
-/** Evita tela preta quando um componente ou lazy load falha. */
-class PageErrorBoundary extends React.Component<{ children: React.ReactNode; onRetry: () => void }> {
-  state = { hasError: false };
-  static getDerivedStateFromError = () => ({ hasError: true });
-  componentDidCatch(err: Error) {
-    console.error('PageErrorBoundary:', err);
-  }
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div className="flex flex-col items-center justify-center min-h-[50vh] gap-6 p-6 text-center">
-          <p className="text-slate-300 font-medium">Algo deu errado ao carregar esta tela.</p>
-          <button
-            type="button"
-            onClick={() => { this.setState({ hasError: false }); this.props.onRetry(); }}
-            className="px-6 py-3 rounded-xl bg-blue-600 text-white text-sm font-black uppercase tracking-widest"
-          >
-            Voltar ao início
-          </button>
-        </div>
-      );
-    }
-    return this.props.children;
-  }
-}
+import { loadAllFromSupabase, syncAllToSupabase } from './supabase/sync';
 
 const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -49,37 +18,58 @@ const App: React.FC = () => {
 
   // Estados dos Dados com Inicialização do LocalStorage
   const [users, setUsers] = useState<User[]>(() => {
-    try { const s = localStorage.getItem('pg_users'); return s ? JSON.parse(s) : INITIAL_USERS; } catch { return INITIAL_USERS; }
+    const saved = localStorage.getItem('pg_users');
+    return saved ? JSON.parse(saved) : INITIAL_USERS;
   });
+
   const [vehicles, setVehicles] = useState<Vehicle[]>(() => {
-    try { const s = localStorage.getItem('pg_vehicles'); return s ? JSON.parse(s) : INITIAL_VEHICLES; } catch { return INITIAL_VEHICLES; }
+    const saved = localStorage.getItem('pg_vehicles');
+    return saved ? JSON.parse(saved) : INITIAL_VEHICLES;
   });
+
   const [customers, setCustomers] = useState<Customer[]>(() => {
-    try { const s = localStorage.getItem('pg_customers'); return s ? JSON.parse(s) : INITIAL_CUSTOMERS; } catch { return INITIAL_CUSTOMERS; }
+    const saved = localStorage.getItem('pg_customers');
+    return saved ? JSON.parse(saved) : INITIAL_CUSTOMERS;
   });
+
   const [fuelings, setFuelings] = useState<Fueling[]>(() => {
-    try { const s = localStorage.getItem('pg_fuelings'); return s ? JSON.parse(s) : []; } catch { return []; }
+    const saved = localStorage.getItem('pg_fuelings');
+    return saved ? JSON.parse(saved) : [];
   });
+
   const [maintenances, setMaintenances] = useState<MaintenanceRequest[]>(() => {
-    try { const s = localStorage.getItem('pg_maintenances'); return s ? JSON.parse(s) : []; } catch { return []; }
+    const saved = localStorage.getItem('pg_maintenances');
+    return saved ? JSON.parse(saved) : [];
   });
+
   const [routes, setRoutes] = useState<RouteDeparture[]>(() => {
-    try { const s = localStorage.getItem('pg_routes'); return s ? JSON.parse(s) : []; } catch { return []; }
+    const saved = localStorage.getItem('pg_routes');
+    return saved ? JSON.parse(saved) : [];
   });
+
   const [dailyRoutes, setDailyRoutes] = useState<DailyRoute[]>(() => {
-    try { const s = localStorage.getItem('pg_daily_routes'); return s ? JSON.parse(s) : []; } catch { return []; }
+    const saved = localStorage.getItem('pg_daily_routes');
+    return saved ? JSON.parse(saved) : [];
   });
+
   const [fixedExpenses, setFixedExpenses] = useState<FixedExpense[]>(() => {
-    try { const s = localStorage.getItem('pg_fixed_expenses'); return s ? JSON.parse(s) : []; } catch { return []; }
+    const saved = localStorage.getItem('pg_fixed_expenses');
+    return saved ? JSON.parse(saved) : [];
   });
+
   const [agregados, setAgregados] = useState<Agregado[]>(() => {
-    try { const s = localStorage.getItem('pg_agregados'); return s ? JSON.parse(s) : []; } catch { return []; }
+    const saved = localStorage.getItem('pg_agregados');
+    return saved ? JSON.parse(saved) : [];
   });
+
   const [agregadoFreights, setAgregadoFreights] = useState<AgregadoFreight[]>(() => {
-    try { const s = localStorage.getItem('pg_agregado_freights'); return s ? JSON.parse(s) : []; } catch { return []; }
+    const saved = localStorage.getItem('pg_agregado_freights');
+    return saved ? JSON.parse(saved) : [];
   });
+
   const [tolls, setTolls] = useState<Toll[]>(() => {
-    try { const s = localStorage.getItem('pg_tolls'); return s ? JSON.parse(s) : []; } catch { return []; }
+    const saved = localStorage.getItem('pg_tolls');
+    return saved ? JSON.parse(saved) : [];
   });
 
   const [dbOnline, setDbOnline] = useState(false);
@@ -204,58 +194,8 @@ const App: React.FC = () => {
     return () => clearInterval(interval);
   }, [currentUser?.id, currentUser?.perfil]);
 
-  // Carregar dados ao montar: se tem pendente (reload após enviar), aplica e sincroniza; senão carrega do Supabase
+  // Carregar dados do Supabase ao montar (se configurado)
   useEffect(() => {
-    const hasPending =
-      localStorage.getItem('pg_pending_fueling') ||
-      localStorage.getItem('pg_pending_maintenance') ||
-      localStorage.getItem('pg_pending_daily_route');
-
-    if (hasPending && supabase) {
-      const pendingPayload: { fueling?: any; maintenance?: any; dailyRoute?: any } = {};
-      const pf = localStorage.getItem('pg_pending_fueling');
-      const pm = localStorage.getItem('pg_pending_maintenance');
-      const pdr = localStorage.getItem('pg_pending_daily_route');
-      if (pf) {
-        try {
-          const data = JSON.parse(pf);
-          pendingPayload.fueling = data;
-          setFuelings(prev => [data, ...prev]);
-          localStorage.removeItem('pg_pending_fueling');
-        } catch (_) { localStorage.removeItem('pg_pending_fueling'); }
-      }
-      if (pm) {
-        try {
-          const data = JSON.parse(pm);
-          pendingPayload.maintenance = data;
-          setMaintenances(prev => [data, ...prev]);
-          localStorage.removeItem('pg_pending_maintenance');
-        } catch (_) { localStorage.removeItem('pg_pending_maintenance'); }
-      }
-      if (pdr) {
-        try {
-          const data = JSON.parse(pdr);
-          pendingPayload.dailyRoute = data;
-          setDailyRoutes(prev => [data, ...prev]);
-          localStorage.removeItem('pg_pending_daily_route');
-        } catch (_) { localStorage.removeItem('pg_pending_daily_route'); }
-      }
-      setDbOnline(true);
-      if (pendingPayload.fueling || pendingPayload.maintenance || pendingPayload.dailyRoute) {
-        syncPendingOnly(supabase, pendingPayload).catch((e) => console.error('Sync pendente:', e));
-      }
-      return;
-    }
-    if (hasPending) {
-      const pf = localStorage.getItem('pg_pending_fueling');
-      if (pf) { try { setFuelings(prev => [JSON.parse(pf), ...prev]); } catch (_) {} localStorage.removeItem('pg_pending_fueling'); }
-      const pm = localStorage.getItem('pg_pending_maintenance');
-      if (pm) { try { setMaintenances(prev => [JSON.parse(pm), ...prev]); } catch (_) {} localStorage.removeItem('pg_pending_maintenance'); }
-      const pdr = localStorage.getItem('pg_pending_daily_route');
-      if (pdr) { try { setDailyRoutes(prev => [JSON.parse(pdr), ...prev]); } catch (_) {} localStorage.removeItem('pg_pending_daily_route'); }
-      return;
-    }
-
     if (!supabase) return;
     loadAllFromSupabase(supabase)
       .then((data) => {
@@ -307,7 +247,7 @@ const App: React.FC = () => {
       const user = users.find(u => u.id === savedUserId);
       if (user && user.ativo) {
         setCurrentUser(user);
-        if (savedSession) try { setSession(JSON.parse(savedSession)); } catch (_) {}
+        if (savedSession) setSession(JSON.parse(savedSession));
         setCurrentPage('operation');
       }
     }
@@ -353,8 +293,11 @@ const App: React.FC = () => {
     setVehicles(prev => [...prev, v]);
   };
 
-  // Lazy Pages (OperationHome, DriverDailyRoute, VehicleSelection, FuelingForm e MaintenanceForm são estáticos para evitar tela preta no celular)
+  // Lazy Pages
   const Login = React.lazy(() => import('./pages/Login'));
+  const OperationHome = React.lazy(() => import('./pages/OperationHome'));
+  const FuelingForm = React.lazy(() => import('./pages/FuelingForm'));
+  const MaintenanceForm = React.lazy(() => import('./pages/MaintenanceForm'));
   const RouteForm = React.lazy(() => import('./pages/RouteForm'));
   const MyRequests = React.lazy(() => import('./pages/MyRequests'));
   const MyRoutes = React.lazy(() => import('./pages/MyRoutes'));
@@ -362,6 +305,7 @@ const App: React.FC = () => {
   const AdminPending = React.lazy(() => import('./pages/AdminPending'));
   const UserManagement = React.lazy(() => import('./pages/UserManagement'));
   const VehicleManagement = React.lazy(() => import('./pages/VehicleManagement'));
+  const DriverDailyRoute = React.lazy(() => import('./pages/DriverDailyRoute'));
   const AdminVehicleReport = React.lazy(() => import('./pages/AdminVehicleReport'));
   const AdminActivityReport = React.lazy(() => import('./pages/AdminActivityReport'));
   const AdminChecklistReport = React.lazy(() => import('./pages/AdminChecklistReport'));
@@ -369,6 +313,7 @@ const App: React.FC = () => {
   const AdminTracking = React.lazy(() => import('./pages/AdminTracking'));
   const AdminDriverLive = React.lazy(() => import('./pages/AdminDriverLive'));
   const AdminConsolidatedFinancialReport = React.lazy(() => import('./pages/AdminConsolidatedFinancialReport'));
+  const VehicleSelection = React.lazy(() => import('./pages/VehicleSelection'));
   const AdminCustomerManagement = React.lazy(() => import('./pages/AdminCustomerManagement'));
   const AdminAgregadoManagement = React.lazy(() => import('./pages/AdminAgregadoManagement'));
   const AdminAgregadoFreight = React.lazy(() => import('./pages/AdminAgregadoFreight'));
@@ -387,27 +332,17 @@ const App: React.FC = () => {
 
     const isOp = currentUser.perfil === UserRole.MOTORISTA || currentUser.perfil === UserRole.AJUDANTE;
     if (isOp && ['fueling', 'maintenance', 'route', 'daily-route', 'helper-binding'].includes(currentPage) && !session) {
-      const loadingFallback = (
-        <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4">
-          <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-slate-400">Carregando seleção de veículo...</p>
-        </div>
-      );
-      return (
-        <React.Suspense fallback={loadingFallback}>
-          <VehicleSelection vehicles={vehicles} onSelect={(vId, pl) => {
-            const s = { userId: currentUser.id, vehicleId: vId, placa: pl, updatedAt: new Date().toISOString() };
-            setSession(s); localStorage.setItem('prime_group_session', JSON.stringify(s)); navigate('operation');
-          }} onBack={() => navigate('operation')} />
-        </React.Suspense>
-      );
+      return <React.Suspense fallback={null}><VehicleSelection vehicles={vehicles} onSelect={(vId, pl) => {
+        const s = { userId: currentUser.id, vehicleId: vId, placa: pl, updatedAt: new Date().toISOString() };
+        setSession(s); localStorage.setItem('prime_group_session', JSON.stringify(s)); navigate('operation');
+      }} onBack={() => navigate('operation')} /></React.Suspense>;
     }
 
     switch (currentPage) {
-      case 'fueling': return <FuelingForm session={session!} user={currentUser} onBack={() => navigate('operation')} onSubmit={(f) => { try { localStorage.setItem('pg_pending_fueling', JSON.stringify(f)); } catch (_) {} window.location.reload(); }} />;
-      case 'maintenance': return <MaintenanceForm session={session!} user={currentUser} onBack={() => navigate('operation')} onSubmit={(m) => { try { localStorage.setItem('pg_pending_maintenance', JSON.stringify(m)); } catch (_) {} window.location.reload(); }} />;
-      case 'route': return <RouteForm session={session!} user={currentUser} drivers={users.filter(u => u.perfil === UserRole.MOTORISTA)} customers={customers} onBack={() => navigate('operation')} onSubmit={(r) => { navigate('operation'); setTimeout(() => { try { saveRecord(setRoutes, r); } catch (_) {} }, 300); }} />;
-      case 'daily-route': return <DriverDailyRoute key="daily-route" session={session!} user={currentUser} customers={customers} onBack={() => navigate('operation')} onSubmit={(dr) => { try { localStorage.setItem('pg_pending_daily_route', JSON.stringify(dr)); } catch (_) {} window.location.reload(); }} />;
+      case 'fueling': return <FuelingForm session={session!} user={currentUser} onBack={() => navigate('operation')} onSubmit={(f) => { saveRecord(setFuelings, f); navigate('operation'); }} />;
+      case 'maintenance': return <MaintenanceForm session={session!} user={currentUser} onBack={() => navigate('operation')} onSubmit={(m) => { saveRecord(setMaintenances, m); navigate('operation'); }} />;
+      case 'route': return <RouteForm session={session!} user={currentUser} drivers={users.filter(u => u.perfil === UserRole.MOTORISTA)} customers={customers} onBack={() => navigate('operation')} onSubmit={(r) => { saveRecord(setRoutes, r); navigate('operation'); }} />;
+      case 'daily-route': return <DriverDailyRoute session={session!} user={currentUser} customers={customers} onBack={() => navigate('operation')} onSubmit={(dr) => { saveRecord(setDailyRoutes, dr); navigate('operation'); }} />;
       case 'helper-binding': return <HelperRouteBinding session={session!} user={currentUser} dailyRoutes={dailyRoutes} users={users} onBack={() => navigate('operation')} onBind={(rId) => { updateRecord(setDailyRoutes, rId, { ajudanteId: currentUser.id, ajudanteNome: currentUser.nome }); navigate('operation'); }} />;
       case 'select-vehicle': return <VehicleSelection vehicles={vehicles} onSelect={(vId, pl) => { const s = { userId: currentUser.id, vehicleId: vId, placa: pl, updatedAt: new Date().toISOString() }; setSession(s); localStorage.setItem('prime_group_session', JSON.stringify(s)); navigate('operation'); }} onBack={() => navigate('operation')} />;
       case 'my-requests': return <MyRequests fuelings={fuelings.filter(f => f.motoristaId === currentUser.id)} maintenances={maintenances.filter(m => m.motoristaId === currentUser.id)} onBack={() => navigate('operation')} />;
@@ -478,11 +413,10 @@ const App: React.FC = () => {
   };
 
   return (
-    <PageErrorBoundary onRetry={() => window.location.reload()}>
-      <div className="min-h-screen flex flex-col bg-slate-950 text-slate-50">
-        <header className="bg-slate-900/80 backdrop-blur-md border-b border-slate-800 p-4 sticky top-0 z-50 flex justify-between items-center shadow-lg">
-          <div className="flex items-center gap-3 cursor-pointer group" onClick={() => navigate('operation')}>
-            <Logo size="sm" showText={false} />
+    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-50">
+      <header className="bg-slate-900/80 backdrop-blur-md border-b border-slate-800 p-4 sticky top-0 z-50 flex justify-between items-center shadow-lg">
+        <div className="flex items-center gap-3 cursor-pointer group" onClick={() => navigate('operation')}>
+          <Logo size="sm" showText={false} />
             <div className="flex flex-col">
               <h1 className="text-sm font-black tracking-[0.1em] text-white uppercase group-hover:text-blue-400 transition-colors">PRIME GROUP</h1>
               <div className="flex items-center gap-1.5">
@@ -490,35 +424,34 @@ const App: React.FC = () => {
                 <span className="text-[8px] font-black uppercase text-slate-500 tracking-widest">{isSupabaseOnline() && dbOnline ? 'Online' : 'Local Mode'}</span>
               </div>
             </div>
+        </div>
+        {currentUser && (
+          <div className="flex items-center gap-4">
+            <div className="hidden md:block text-right">
+              <div className="text-xs font-black text-white uppercase tracking-tight">{currentUser.nome}</div>
+              <div className="text-[9px] text-blue-500 font-black uppercase tracking-widest">{currentUser.perfil}</div>
+            </div>
+            <button 
+              onClick={handleLogout} 
+              className="bg-red-950/20 text-red-400 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border border-red-900/20 hover:bg-red-950/40 transition-all active:scale-95"
+            >
+              Sair
+            </button>
           </div>
-          {currentUser && (
-            <div className="flex items-center gap-4">
-              <div className="hidden md:block text-right">
-                <div className="text-xs font-black text-white uppercase tracking-tight">{currentUser.nome}</div>
-                <div className="text-[9px] text-blue-500 font-black uppercase tracking-widest">{currentUser.perfil}</div>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="bg-red-950/20 text-red-400 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border border-red-900/20 hover:bg-red-950/40 transition-all active:scale-95"
-              >
-                Sair
-              </button>
-            </div>
-          )}
-        </header>
-        {currentUser && <DriverLocationSender user={currentUser} />}
-        <main className="flex-1 overflow-y-auto p-4 md:p-8 w-full">
-          <React.Suspense fallback={
-            <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
-              <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-              <div className="text-[10px] font-black animate-pulse text-slate-600 uppercase tracking-[0.3em]">Carregando Sistemas...</div>
-            </div>
-          }>
-            {renderPage()}
-          </React.Suspense>
-        </main>
-      </div>
-    </PageErrorBoundary>
+        )}
+      </header>
+      {currentUser && <DriverLocationSender user={currentUser} />}
+      <main className="flex-1 overflow-y-auto p-4 md:p-8 w-full">
+        <React.Suspense fallback={
+          <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
+            <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            <div className="text-[10px] font-black animate-pulse text-slate-600 uppercase tracking-[0.3em]">Carregando Sistemas...</div>
+          </div>
+        }>
+          {renderPage()}
+        </React.Suspense>
+      </main>
+    </div>
   );
 };
 

@@ -1,44 +1,71 @@
-import React, { useEffect, useRef } from 'react';
-import { User, UserRole } from '../types';
-import { pushDriverLocation } from '../supabase/driverLocation';
+/**
+ * Envia a localização do celular do motorista para o Supabase em tempo real.
+ * Só atua quando o usuário logado é motorista e o Supabase está configurado.
+ */
 
-const INTERVAL_MS = 15000;
+import React, { useEffect, useRef } from 'react';
+import { supabase } from '../supabase';
+import { pushDriverLocation } from '../supabase/driverLocation';
+import { User, UserRole } from '../types';
+
+const INTERVAL_MS = 25 * 1000; // 25 segundos (economia de bateria)
 
 interface DriverLocationSenderProps {
-  user: User;
+  user: User | null;
 }
 
 export const DriverLocationSender: React.FC<DriverLocationSenderProps> = ({ user }) => {
+  const watchIdRef = useRef<number | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    if (user.perfil !== UserRole.MOTORISTA) return;
+    if (!user || user.perfil !== UserRole.MOTORISTA || !supabase) return;
+    if (!('geolocation' in navigator)) return;
 
-    const send = () => {
-      if (!navigator.geolocation) return;
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          pushDriverLocation(
-            user.id,
-            user.nome,
-            pos.coords.latitude,
-            pos.coords.longitude,
-            pos.coords.accuracy != null ? pos.coords.accuracy : undefined
-          );
-        },
-        (err) => {
-          console.warn('[DriverLocation] Erro ao obter localização:', err.message);
-        },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 }
+    const sendPosition = (position: GeolocationPosition) => {
+      pushDriverLocation(
+        supabase,
+        user.id,
+        position.coords.latitude,
+        position.coords.longitude,
+        position.coords.accuracy ?? undefined
       );
     };
 
-    send();
-    intervalRef.current = setInterval(send, INTERVAL_MS);
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
+    const onError = (err: GeolocationPositionError) => {
+      console.warn('[DriverLocation] Erro ao obter localização:', err.message);
     };
-  }, [user.id, user.nome, user.perfil]);
+
+    // Usar getCurrentPosition em intervalo para economizar bateria (em vez de watchPosition contínuo)
+    const tick = () => {
+      navigator.geolocation.getCurrentPosition(sendPosition, onError, {
+        enableHighAccuracy: true,
+        maximumAge: 60000,
+        timeout: 10000,
+      });
+    };
+
+    // Primeira posição após permissão
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        sendPosition(pos);
+        intervalRef.current = setInterval(tick, INTERVAL_MS);
+      },
+      onError,
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }
+    );
+
+    return () => {
+      if (watchIdRef.current != null) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
+      }
+      if (intervalRef.current != null) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [user?.id, user?.perfil]);
 
   return null;
 };
