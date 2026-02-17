@@ -1,195 +1,106 @@
+========================================
+  CRIAR PROJETO NO SUPABASE (DO ZERO)
+========================================
 
-# 🚛 PRIME GROUP - Instruções para Rodar Localmente
+Siga cada passo. No final você terá um projeto e a URL + chave para colocar na Vercel.
 
-Este projeto foi desenvolvido para funcionar como um Web App (PWA) e está configurado para rodar localmente com **Vite** e **React**.
+----------------------------------------
+PASSO 1 – ENTRAR NO SITE E CRIAR CONTA
+----------------------------------------
 
-## 📋 Pré-requisitos
-- **Node.js** (v18 ou superior) instalado no seu computador.
-- Um editor de código (como o **VS Code**).
+1. Abra o navegador e acesse:  https://supabase.com
 
-## 🚀 Como Iniciar
+2. Clique no botão verde "Start your project".
 
-1. **Extraia os arquivos**: Se você usou o script `setup_projeto.py`, os arquivos já estarão na pasta.
-2. **Abra o Terminal**: Navegue até a pasta do projeto.
-3. **Instale as dependências**:
-   ```bash
-   npm install
-   ```
-4. **Inicie o servidor de desenvolvimento**:
-   ```bash
-   npm run dev
-   ```
-5. **Acesse o App**: O terminal mostrará um link (geralmente `http://localhost:5173`). Abra-o no seu navegador.
+3. Crie a conta:
+   • "Sign in with GitHub" (se você tem GitHub) – é o mais rápido
+   OU
+   • "Sign up with email" – coloque e-mail e senha e confirme no e-mail
 
-## 📱 Transformando em App de Celular (APK)
-Este projeto usa a estrutura compatível com **Capacitor**. Para gerar um APK:
-1. Instale o Capacitor: `npm install @capacitor/core @capacitor/cli @capacitor/android`
-2. Inicialize: `npx cap init`
-3. Adicione o Android: `npx cap add android`
-4. Gere o build: `npm run build`
-5. Sincronize: `npx cap copy`
-6. Abra no Android Studio: `npx cap open android`
+4. Depois de logar, você verá o painel do Supabase (Dashboard).
 
-## 💾 Armazenamento
+----------------------------------------
+PASSO 2 – CRIAR UM NOVO PROJETO
+----------------------------------------
 
-- **Sem configuração:** os dados ficam no **LocalStorage** do navegador (modo local). O header mostra "Local Mode".
-- **Com Supabase:** os dados são carregados e salvos na nuvem. O header mostra "Online".
+1. Clique no botão verde "New Project".
 
-### Como ativar a base de dados online (Supabase)
+2. Se pedir, escolha sua "Organization" (pode ser seu usuário mesmo). Next.
 
-1. Crie uma conta e um projeto em [supabase.com](https://supabase.com).
-2. No dashboard do projeto, vá em **SQL Editor** > **New query**. Execute **cada** arquivo abaixo, **na ordem** (copie e cole o conteúdo inteiro e rode):
-   - `supabase/migrations/00001_initial_schema.sql` — tabelas principais
-   - `supabase/migrations/00002_daily_routes_avaria.sql` — avaria em rotas diárias
-   - `supabase/migrations/00003_fixed_expenses_dia_vencimento.sql` — dia do vencimento em despesas
-   - `supabase/migrations/00004_driver_locations.sql` — localização em tempo real dos motoristas
-3. Em **Project Settings** > **API**, copie:
-   - **Project URL**
-   - **anon public** (chave pública)
-4. Na pasta do projeto, crie o arquivo `.env.local` (pode copiar de `.env.example`) e preencha:
-   ```
-   VITE_SUPABASE_URL=https://xxxxx.supabase.co
-   VITE_SUPABASE_ANON_KEY=eyJhbGc...
-   ```
-5. Reinicie o app (`npm run dev`). O header passará a mostrar **"Online"**. Na primeira vez com a base vazia, o app carregará vazio; use normalmente e os dados passarão a ser salvos na nuvem (incluindo localização dos motoristas em tempo real).
+3. Preencha:
+   • Name:  prime-group
+          (ou outro nome, sem espaços)
+   • Database Password:  crie uma senha forte e ANOTE em algum lugar.
+     (Ex.: MinHaS3nhaSupabase2024!)
+     Você usa essa senha só para acessos avançados ao banco.
+   • Region:  South America (São Paulo)
+          (deixe São Paulo para ficar mais rápido no Brasil)
 
----
+4. Clique em "Create new project".
 
-# 🌐 Guia passo a passo: App online + base de dados funcionando
+5. Aguarde 1 a 2 minutos. A página vai carregar até aparecer "Project is ready".
 
-Siga na ordem. No final você terá o app acessível por um link na internet e todos os dados na nuvem (Supabase).
+----------------------------------------
+PASSO 3 – CRIAR AS TABELAS (RODAR AS MIGRATIONS)
+----------------------------------------
 
----
+1. No menu da ESQUERDA, clique em "SQL Editor" (ícone de </>).
 
-## PARTE 1 — Base de dados (Supabase)
+2. Clique em "+ New query" (canto superior direito).
 
-### Passo 1.1 — Criar conta e projeto
+3. No seu computador, abra a pasta do projeto Prime Group:
+   C:\Users\USER\Desktop\Nova pasta\prime-projeto-main\prime-projeto-main
 
-1. Acesse **[supabase.com](https://supabase.com)** e clique em **Start your project**.
-2. Crie uma conta (Google ou e-mail).
-3. Clique em **New Project**.
-4. Preencha:
-   - **Name:** por exemplo `prime-group`
-   - **Database Password:** crie e **guarde** uma senha forte (você vai precisar só para acessos avançados).
-   - **Region:** escolha a mais próxima (ex.: South America (São Paulo)).
-5. Clique em **Create new project** e aguarde alguns minutos.
+4. Abra a pasta "supabase", depois "migrations".
 
-### Passo 1.2 — Criar as tabelas no banco
+5. Abra o arquivo:  00001_initial_schema.sql
+   • Selecione tudo (Ctrl+A) e copie (Ctrl+C).
+   • Volte ao navegador no Supabase, clique dentro da caixa de texto do SQL Editor e cole (Ctrl+V).
+   • Clique no botão "Run" (ou aperte Ctrl+Enter).
+   • Deve aparecer "Success. No rows returned" em verde.
 
-1. No menu lateral do Supabase, clique em **SQL Editor**.
-2. Clique em **+ New query**.
-3. Abra no seu computador o arquivo **`supabase/migrations/00001_initial_schema.sql`** (pasta do projeto Prime Group).
-4. Copie **todo** o conteúdo do arquivo (Ctrl+A, Ctrl+C).
-5. Cole no editor SQL do Supabase e clique em **Run** (ou Ctrl+Enter). Deve aparecer “Success”.
-6. Repita para os outros arquivos, **sempre na ordem**:
-   - **00002_daily_routes_avaria.sql** → Run
-   - **00003_fixed_expenses_dia_vencimento.sql** → Run
-   - **00004_driver_locations.sql** → Run
+6. Apague o texto do editor (Ctrl+A, Delete). Repita o processo para os outros 3 arquivos, NA MESMA ORDEM:
+   • 00002_daily_routes_avaria.sql
+   • 00003_fixed_expenses_dia_vencimento.sql
+   • 00004_driver_locations.sql
+   Cada um: abrir arquivo → copiar tudo → colar no SQL Editor → Run.
 
-Se todos derem “Success”, a base está pronta.
+7. Se os 4 rodaram sem erro, sua base está pronta.
 
-### Passo 1.3 — Copiar URL e chave da API
+----------------------------------------
+PASSO 4 – COPIAR A URL E A CHAVE (PARA A VERCEL)
+----------------------------------------
 
-1. No menu lateral, clique em **Project Settings** (ícone de engrenagem).
-2. Clique em **API** no submenu.
-3. Na seção **Project URL**, clique no ícone de copiar e guarde (ex.: `https://abcdefgh.supabase.co`).
-4. Na seção **Project API keys**, copie a chave **anon** **public** (não use a chave `service_role`). Ela começa com `eyJ...` e é longa.
+1. No menu da ESQUERDA, clique na engrenagem: "Project Settings".
 
-Você vai usar esses dois valores no app (local e na hospedagem).
+2. No submenu, clique em "API".
 
-### Passo 1.4 — Configurar o app localmente
+3. Na página você verá:
+   • Project URL
+     Clique no ícone de copiar ao lado. Guarde em um bloco de notas (ex.: https://abcdefghijk.supabase.co).
+   • Project API keys
+     Procure a chave "anon" "public". É uma chave longa que começa com eyJ...
+     Clique em "Reveal" se estiver escondida e depois no ícone de copiar.
+     NÃO use a chave "service_role" (é secreta).
 
-1. Na pasta do projeto (onde está o `package.json`), crie um arquivo chamado **`.env.local`**.
-2. Se existir **`.env.example`**, você pode copiá-lo e renomear para `.env.local`.
-3. Abra `.env.local` e deixe exatamente assim (trocando pelos seus valores):
+4. Você agora tem:
+   – Project URL (para VITE_SUPABASE_URL na Vercel)
+   – Chave anon public (para VITE_SUPABASE_ANON_KEY na Vercel)
 
-   ```
-   VITE_SUPABASE_URL=https://SEU-PROJETO.supabase.co
-   VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.SUA_CHAVE_AQUI
-   ```
+----------------------------------------
+PRÓXIMO PASSO (DEPOIS DE CRIAR O PROJETO)
+----------------------------------------
 
-4. Salve o arquivo.
-5. No terminal, na pasta do projeto, rode:
-   ```bash
-   npm run dev
-   ```
-6. Abra o app no navegador. No topo da tela deve aparecer **“Online”** (verde). Se aparecer, a base de dados está funcionando.
+Abra o arquivo  APP-ONLINE-COM-BASE-DE-DADOS.txt  e siga a PARTE 2:
+colocar essas duas informações na Vercel (Environment Variables) e fazer Redeploy.
 
----
+========================================
 
-## PARTE 2 — Deixar o app online (acessível por link)
+RESUMO:
+1. supabase.com → Start your project → criar conta
+2. New Project → nome, senha, região São Paulo → Create
+3. SQL Editor → New query → rodar os 4 arquivos da pasta supabase/migrations (copiar e colar cada um, Run)
+4. Project Settings > API → copiar Project URL e anon public
+5. Usar na Vercel (ver APP-ONLINE-COM-BASE-DE-DADOS.txt)
 
-Recomendação: **Vercel** (grátis e simples para este projeto).
-
-### Passo 2.1 — Conta na Vercel
-
-1. Acesse **[vercel.com](https://vercel.com)** e clique em **Sign Up**.
-2. Crie a conta (por exemplo com GitHub). Se o projeto estiver no GitHub, a Vercel conecta direto.
-
-### Passo 2.2 — Enviar o projeto para o GitHub
-
-1. No **[github.com](https://github.com)**, faça login e clique no **+** (canto superior direito) → **New repository**.
-2. Preencha:
-   - **Repository name:** por exemplo `prime-group-app` (sem espaços).
-   - **Description:** opcional (ex.: "App Prime Group").
-   - Deixe **Public**.
-   - **Não** marque "Add a README" (o projeto já tem arquivos).
-3. Clique em **Create repository**.
-4. A página do repositório vai mostrar um link. Anote: `https://github.com/SEU-USUARIO/prime-group-app.git` (troque SEU-USUARIO pelo seu usuário do GitHub).
-5. Abra o **terminal** (PowerShell ou CMD) e vá até a pasta do projeto, por exemplo:
-   ```bash
-   cd "C:\Users\USER\Desktop\Nova pasta\prime-projeto-main\prime-projeto-main"
-   ```
-6. Rode os comandos abaixo **um por um** (troque a URL pelo link do seu repositório):
-
-   ```bash
-   git init
-   git add .
-   git commit -m "Prime Group - app e migrations"
-   git branch -M main
-   git remote add origin https://github.com/SEU-USUARIO/prime-group-app.git
-   git push -u origin main
-   ```
-
-7. Na primeira vez que rodar `git push`, o GitHub pode pedir **login** (usuário e senha). Se pedir senha, use um **Personal Access Token** em vez da senha da conta: em GitHub → **Settings** → **Developer settings** → **Personal access tokens** → **Generate new token**, marque **repo** e use o token como senha.
-8. Depois do `git push`, atualize a página do repositório no navegador: todos os arquivos do projeto devem aparecer lá.
-
-### Passo 2.3 — Criar o projeto na Vercel
-
-1. No painel da Vercel, clique em **Add New** → **Project**.
-2. **Import** o repositório do GitHub (se conectou a conta, ele lista os repositórios). Selecione o do Prime Group.
-3. Em **Configure Project**:
-   - **Framework Preset:** Vite (deve detectar sozinho).
-   - **Root Directory:** deixe em branco.
-   - **Build Command:** `npm run build` (já vem assim).
-   - **Output Directory:** `dist` (já vem assim).
-4. Clique em **Environment Variables** e adicione **duas** variáveis (use os mesmos valores do `.env.local`):
-
-   | Name                  | Value                          |
-   |-----------------------|---------------------------------|
-   | `VITE_SUPABASE_URL`   | `https://SEU-PROJETO.supabase.co` |
-   | `VITE_SUPABASE_ANON_KEY` | `eyJ...` (sua chave anon)       |
-
-5. Clique em **Deploy**. Aguarde o build terminar.
-
-### Passo 2.4 — Acessar o app online
-
-1. Quando o deploy terminar, a Vercel mostra um link, por exemplo:  
-   `https://prime-group-app.vercel.app`
-2. Clique no link (ou copie e abra no celular). O app deve abrir e, no topo, mostrar **“Online”**.
-3. Faça login com um usuário que você já tenha cadastrado (se a base estava vazia, cadastre primeiro pelo app local com Supabase ativo, ou crie usuários direto na tabela `users` no Supabase).
-
----
-
-## ✅ Checklist final
-
-- [ ] Conta e projeto criados no Supabase  
-- [ ] As 4 migrations executadas no SQL Editor (00001 a 00004)  
-- [ ] URL e chave anon copiadas do Supabase  
-- [ ] Arquivo `.env.local` criado com `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`  
-- [ ] App local mostra **“Online”** ao rodar `npm run dev`  
-- [ ] Código no GitHub (se for usar Vercel)  
-- [ ] Projeto criado na Vercel com as mesmas variáveis de ambiente  
-- [ ] Deploy concluído e link do app aberto no navegador/celular  
-
-Se todos os itens estiverem ok, o app está **online** e com a **base de dados funcionando**.
+========================================

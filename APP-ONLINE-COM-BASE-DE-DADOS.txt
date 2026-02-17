@@ -1,89 +1,17 @@
-========================================
-  APP ONLINE COM BASE DE DADOS (Supabase)
-========================================
+-- Localização em tempo real dos motoristas (GPS do celular)
+CREATE TABLE IF NOT EXISTS driver_locations (
+  user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  lat DOUBLE PRECISION NOT NULL,
+  lng DOUBLE PRECISION NOT NULL,
+  accuracy DOUBLE PRECISION,
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
 
-Siga na ordem. No final o app estará no ar e salvando tudo na nuvem.
+-- Índice para listar por última atualização
+CREATE INDEX IF NOT EXISTS idx_driver_locations_updated_at ON driver_locations(updated_at DESC);
 
-----------------------------------------
-PARTE 1 – CRIAR E CONFIGURAR O SUPABASE
-----------------------------------------
+-- Habilitar RLS (opcional: política permite leitura para todos autenticados e escrita do próprio user_id)
+ALTER TABLE driver_locations ENABLE ROW LEVEL SECURITY;
 
-1. Acesse https://supabase.com e faça login (ou crie conta com Google).
-
-2. Clique em "New Project".
-   • Name: prime-group (ou outro nome)
-   • Database Password: crie uma senha e GUARDE (para acessos avançados)
-   • Region: South America (São Paulo)
-   Clique em "Create new project" e aguarde 1–2 minutos.
-
-3. Criar as tabelas no banco:
-   • No menu da esquerda: SQL Editor.
-   • Clique em "+ New query".
-   • No seu PC, abra a pasta do projeto e abra o arquivo:
-     supabase/migrations/00001_initial_schema.sql
-   • Copie TODO o conteúdo (Ctrl+A, Ctrl+C).
-   • Cole no editor SQL do Supabase e clique em "Run" (ou Ctrl+Enter).
-   • Repita para os outros 3 arquivos, NA MESMA ORDEM:
-     - 00002_daily_routes_avaria.sql    → Run
-     - 00003_fixed_expenses_dia_vencimento.sql → Run
-     - 00004_driver_locations.sql       → Run
-   Todos devem mostrar "Success".
-
-4. Copiar URL e chave para usar no app:
-   • No menu: Project Settings (ícone de engrenagem).
-   • Clique em "API".
-   • Em "Project URL": clique no ícone de copiar. Guarde (ex.: https://xxxx.supabase.co).
-   • Em "Project API keys": copie a chave "anon" "public" (a que começa com eyJ...).
-     NÃO use a chave "service_role".
-
-----------------------------------------
-PARTE 2 – COLOCAR A BASE NA VERCEL
-----------------------------------------
-
-1. Acesse https://vercel.com e faça login.
-
-2. Clique no seu projeto (ex.: Prime-novo).
-
-3. No menu do projeto: Settings > Environment Variables.
-
-4. Adicione a primeira variável:
-   • Key (nome):  VITE_SUPABASE_URL
-   • Value:       cole a Project URL que você copiou do Supabase
-   • Marque: Production, Preview, Development
-   Clique em "Save".
-
-5. Adicione a segunda variável:
-   • Key:   VITE_SUPABASE_ANON_KEY
-   • Value: cole a chave "anon public" que você copiou do Supabase
-   • Marque: Production, Preview, Development
-   Clique em "Save".
-
-6. Fazer um novo deploy para o app usar a base:
-   • No menu do projeto: Deployments.
-   • No último deploy, clique nos três pontinhos (...).
-   • Clique em "Redeploy".
-   • Confirme "Redeploy". Aguarde terminar (1–2 min).
-
-----------------------------------------
-PARTE 3 – TESTAR
-----------------------------------------
-
-1. No projeto na Vercel, clique no link do app (ex.: https://prime-novo.vercel.app).
-
-2. Abra o app. No topo da tela deve aparecer "Online" (em verde).
-   Se aparecer "Local Mode", as variáveis não foram aplicadas: confira o nome
-   (VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY) e faça Redeploy de novo.
-
-3. Faça login. Na primeira vez a base pode estar vazia – cadastre um usuário
-   ou use os que você já tinha no Supabase. Tudo que você fizer (rotas,
-   abastecimentos, despesas, etc.) passa a ser salvo na nuvem.
-
-----------------------------------------
-RESUMO
-----------------------------------------
-
-Supabase: criar projeto → rodar 4 migrations no SQL Editor → copiar URL e anon key.
-Vercel:   Settings > Environment Variables → VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY → Redeploy.
-Teste:    abrir o link do app → deve mostrar "Online".
-
-========================================
+DROP POLICY IF EXISTS "Allow all driver_locations" ON driver_locations;
+CREATE POLICY "Allow all driver_locations" ON driver_locations FOR ALL USING (true) WITH CHECK (true);

@@ -1,24 +1,86 @@
+========================================
+  JÁ ESTÁ NO GITHUB E VERCEL – DEIXAR ONLINE
+========================================
 
-{
-  "name": "PRIME GROUP Gestão",
-  "short_name": "PRIME",
-  "description": "Sistema Operacional PRIME GROUP Transportadora",
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#020617",
-  "theme_color": "#1e3a8a",
-  "orientation": "portrait-primary",
-  "icons": [
-    {
-      "src": "https://raw.githubusercontent.com/google/material-design-icons/master/png/action/settings_input_component/black/48dp/1x/baseline_settings_input_component_black_48dp.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "https://raw.githubusercontent.com/google/material-design-icons/master/png/action/settings_input_component/black/48dp/1x/baseline_settings_input_component_black_48dp.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    }
-  ]
-}
+Você já importou. Falta só isso:
+
+----------------------------------------
+1. VER O LINK DO APP (já está no ar)
+----------------------------------------
+
+1. Acesse https://vercel.com e faça login.
+2. Clique no seu projeto (ex.: Prime-novo).
+3. No topo da página você vê o link do app, tipo:
+   https://prime-novo.vercel.app
+   ou
+   https://prime-novo-xxxx.vercel.app
+
+4. Clique no link ou copie e abra no celular/PC.
+   O app já está ONLINE nesse endereço.
+
+Se o deploy deu certo, o app abre. Se aparecer erro de build, veja o passo 3.
+
+----------------------------------------
+2. CONECTAR A BASE DE DADOS (Supabase)
+   Para o app mostrar "Online" e salvar na nuvem
+----------------------------------------
+
+Se você AINDA NÃO criou o projeto no Supabase:
+
+  a) Crie em https://supabase.com (New Project).
+  b) No SQL Editor, rode as 4 migrations na ordem:
+     supabase/migrations/00001_initial_schema.sql
+     supabase/migrations/00002_daily_routes_avaria.sql
+     supabase/migrations/00003_fixed_expenses_dia_vencimento.sql
+     supabase/migrations/00004_driver_locations.sql
+  c) Em Project Settings > API, copie:
+     - Project URL
+     - anon public (chave)
+
+Se você JÁ TEM o projeto Supabase e a URL + chave:
+
+  • No painel da Vercel: clique no seu projeto.
+  • Vá em Settings > Environment Variables.
+  • Adicione duas variáveis:
+
+    Name:   VITE_SUPABASE_URL
+    Value:  https://seu-projeto.supabase.co
+
+    Name:   VITE_SUPABASE_ANON_KEY
+    Value:  eyJhbGci... (sua chave anon)
+
+  • Marque: Production, Preview e Development (as três).
+  • Clique em Save.
+
+  • Depois: na aba "Deployments", clique nos três pontinhos do último deploy
+    e escolha "Redeploy". Assim o app passa a usar a base e mostra "Online".
+
+----------------------------------------
+3. SE O DEPLOY FALHOU NA VERCEL
+----------------------------------------
+
+1. No projeto na Vercel, clique na aba "Deployments".
+2. Clique no último deploy (o que falhou).
+3. Veja a mensagem de erro (Build Failed ou similar).
+4. Problemas comuns:
+   - "Root Directory": se o código está dentro de uma subpasta (ex. prime-projeto-main),
+     em Vercel > Settings > General > Root Directory, coloque: prime-projeto-main
+   - Depois: Deployments > ... > Redeploy.
+
+----------------------------------------
+CHECKLIST RÁPIDO
+----------------------------------------
+
+[ ] Abri vercel.com e achei o link do meu projeto
+[ ] Abri o link e o app carrega (está online)
+[ ] Criei projeto no Supabase e rodei as 4 migrations
+[ ] Copiei Project URL e anon key do Supabase
+[ ] Coloquei VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY na Vercel (Settings > Environment Variables)
+[ ] Fiz Redeploy na Vercel
+[ ] Abri o link de novo e o app mostra "Online" no topo
+
+========================================
+
+RESUMO: O app fica online assim que o deploy da Vercel termina. O link você pega no painel do projeto. Para usar a base de dados, adicione as variáveis do Supabase na Vercel e faça um Redeploy.
+
+========================================

@@ -1,86 +1,89 @@
 ========================================
-  JÁ ESTÁ NO GITHUB E VERCEL – DEIXAR ONLINE
+  APP ONLINE COM BASE DE DADOS (Supabase)
 ========================================
 
-Você já importou. Falta só isso:
+Siga na ordem. No final o app estará no ar e salvando tudo na nuvem.
 
 ----------------------------------------
-1. VER O LINK DO APP (já está no ar)
+PARTE 1 – CRIAR E CONFIGURAR O SUPABASE
+----------------------------------------
+
+1. Acesse https://supabase.com e faça login (ou crie conta com Google).
+
+2. Clique em "New Project".
+   • Name: prime-group (ou outro nome)
+   • Database Password: crie uma senha e GUARDE (para acessos avançados)
+   • Region: South America (São Paulo)
+   Clique em "Create new project" e aguarde 1–2 minutos.
+
+3. Criar as tabelas no banco:
+   • No menu da esquerda: SQL Editor.
+   • Clique em "+ New query".
+   • No seu PC, abra a pasta do projeto e abra o arquivo:
+     supabase/migrations/00001_initial_schema.sql
+   • Copie TODO o conteúdo (Ctrl+A, Ctrl+C).
+   • Cole no editor SQL do Supabase e clique em "Run" (ou Ctrl+Enter).
+   • Repita para os outros 3 arquivos, NA MESMA ORDEM:
+     - 00002_daily_routes_avaria.sql    → Run
+     - 00003_fixed_expenses_dia_vencimento.sql → Run
+     - 00004_driver_locations.sql       → Run
+   Todos devem mostrar "Success".
+
+4. Copiar URL e chave para usar no app:
+   • No menu: Project Settings (ícone de engrenagem).
+   • Clique em "API".
+   • Em "Project URL": clique no ícone de copiar. Guarde (ex.: https://xxxx.supabase.co).
+   • Em "Project API keys": copie a chave "anon" "public" (a que começa com eyJ...).
+     NÃO use a chave "service_role".
+
+----------------------------------------
+PARTE 2 – COLOCAR A BASE NA VERCEL
 ----------------------------------------
 
 1. Acesse https://vercel.com e faça login.
+
 2. Clique no seu projeto (ex.: Prime-novo).
-3. No topo da página você vê o link do app, tipo:
-   https://prime-novo.vercel.app
-   ou
-   https://prime-novo-xxxx.vercel.app
 
-4. Clique no link ou copie e abra no celular/PC.
-   O app já está ONLINE nesse endereço.
+3. No menu do projeto: Settings > Environment Variables.
 
-Se o deploy deu certo, o app abre. Se aparecer erro de build, veja o passo 3.
+4. Adicione a primeira variável:
+   • Key (nome):  VITE_SUPABASE_URL
+   • Value:       cole a Project URL que você copiou do Supabase
+   • Marque: Production, Preview, Development
+   Clique em "Save".
 
-----------------------------------------
-2. CONECTAR A BASE DE DADOS (Supabase)
-   Para o app mostrar "Online" e salvar na nuvem
-----------------------------------------
+5. Adicione a segunda variável:
+   • Key:   VITE_SUPABASE_ANON_KEY
+   • Value: cole a chave "anon public" que você copiou do Supabase
+   • Marque: Production, Preview, Development
+   Clique em "Save".
 
-Se você AINDA NÃO criou o projeto no Supabase:
-
-  a) Crie em https://supabase.com (New Project).
-  b) No SQL Editor, rode as 4 migrations na ordem:
-     supabase/migrations/00001_initial_schema.sql
-     supabase/migrations/00002_daily_routes_avaria.sql
-     supabase/migrations/00003_fixed_expenses_dia_vencimento.sql
-     supabase/migrations/00004_driver_locations.sql
-  c) Em Project Settings > API, copie:
-     - Project URL
-     - anon public (chave)
-
-Se você JÁ TEM o projeto Supabase e a URL + chave:
-
-  • No painel da Vercel: clique no seu projeto.
-  • Vá em Settings > Environment Variables.
-  • Adicione duas variáveis:
-
-    Name:   VITE_SUPABASE_URL
-    Value:  https://seu-projeto.supabase.co
-
-    Name:   VITE_SUPABASE_ANON_KEY
-    Value:  eyJhbGci... (sua chave anon)
-
-  • Marque: Production, Preview e Development (as três).
-  • Clique em Save.
-
-  • Depois: na aba "Deployments", clique nos três pontinhos do último deploy
-    e escolha "Redeploy". Assim o app passa a usar a base e mostra "Online".
+6. Fazer um novo deploy para o app usar a base:
+   • No menu do projeto: Deployments.
+   • No último deploy, clique nos três pontinhos (...).
+   • Clique em "Redeploy".
+   • Confirme "Redeploy". Aguarde terminar (1–2 min).
 
 ----------------------------------------
-3. SE O DEPLOY FALHOU NA VERCEL
+PARTE 3 – TESTAR
 ----------------------------------------
 
-1. No projeto na Vercel, clique na aba "Deployments".
-2. Clique no último deploy (o que falhou).
-3. Veja a mensagem de erro (Build Failed ou similar).
-4. Problemas comuns:
-   - "Root Directory": se o código está dentro de uma subpasta (ex. prime-projeto-main),
-     em Vercel > Settings > General > Root Directory, coloque: prime-projeto-main
-   - Depois: Deployments > ... > Redeploy.
+1. No projeto na Vercel, clique no link do app (ex.: https://prime-novo.vercel.app).
+
+2. Abra o app. No topo da tela deve aparecer "Online" (em verde).
+   Se aparecer "Local Mode", as variáveis não foram aplicadas: confira o nome
+   (VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY) e faça Redeploy de novo.
+
+3. Faça login. Na primeira vez a base pode estar vazia – cadastre um usuário
+   ou use os que você já tinha no Supabase. Tudo que você fizer (rotas,
+   abastecimentos, despesas, etc.) passa a ser salvo na nuvem.
 
 ----------------------------------------
-CHECKLIST RÁPIDO
+RESUMO
 ----------------------------------------
 
-[ ] Abri vercel.com e achei o link do meu projeto
-[ ] Abri o link e o app carrega (está online)
-[ ] Criei projeto no Supabase e rodei as 4 migrations
-[ ] Copiei Project URL e anon key do Supabase
-[ ] Coloquei VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY na Vercel (Settings > Environment Variables)
-[ ] Fiz Redeploy na Vercel
-[ ] Abri o link de novo e o app mostra "Online" no topo
-
-========================================
-
-RESUMO: O app fica online assim que o deploy da Vercel termina. O link você pega no painel do projeto. Para usar a base de dados, adicione as variáveis do Supabase na Vercel e faça um Redeploy.
+Supabase: criar projeto → rodar 4 migrations no SQL Editor → copiar URL e anon key.
+Vercel:   Settings > Environment Variables → VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY → Redeploy.
+Teste:    abrir o link do app → deve mostrar "Online".
 
 ========================================
