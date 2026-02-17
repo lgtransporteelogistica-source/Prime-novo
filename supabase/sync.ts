@@ -102,21 +102,22 @@ export async function loadAllFromSupabase(supabase: SupabaseClient): Promise<All
 }
 
 export async function syncAllToSupabase(supabase: SupabaseClient, data: AllData): Promise<void> {
-  try {
-    await Promise.all([
-      data.users.length ? supabase.from('users').upsert(data.users.map(mapUserToDb), { onConflict: 'id' }) : Promise.resolve({ error: null }),
-      data.vehicles.length ? supabase.from('vehicles').upsert(data.vehicles.map(mapVehicleToDb), { onConflict: 'id' }) : Promise.resolve({ error: null }),
-      data.customers.length ? supabase.from('customers').upsert(data.customers.map(mapCustomerToDb), { onConflict: 'id' }) : Promise.resolve({ error: null }),
-      data.fuelings.length ? supabase.from('fuelings').upsert(data.fuelings.map(mapFuelingToDb), { onConflict: 'id' }) : Promise.resolve({ error: null }),
-      data.maintenances.length ? supabase.from('maintenance_requests').upsert(data.maintenances.map(mapMaintenanceToDb), { onConflict: 'id' }) : Promise.resolve({ error: null }),
-      data.dailyRoutes.length ? supabase.from('daily_routes').upsert(data.dailyRoutes.map(mapDailyRouteToDb), { onConflict: 'id' }) : Promise.resolve({ error: null }),
-      data.routes.length ? supabase.from('route_departures').upsert(data.routes.map(mapRouteDepartureToDb), { onConflict: 'id' }) : Promise.resolve({ error: null }),
-      data.fixedExpenses.length ? supabase.from('fixed_expenses').upsert(data.fixedExpenses.map(mapFixedExpenseToDb), { onConflict: 'id' }) : Promise.resolve({ error: null }),
-      data.agregados.length ? supabase.from('agregados').upsert(data.agregados.map(mapAgregadoToDb), { onConflict: 'id' }) : Promise.resolve({ error: null }),
-      data.agregadoFreights.length ? supabase.from('agregado_freights').upsert(data.agregadoFreights.map(mapAgregadoFreightToDb), { onConflict: 'id' }) : Promise.resolve({ error: null }),
-      data.tolls.length ? supabase.from('tolls').upsert(data.tolls.map(mapTollToDb), { onConflict: 'id' }) : Promise.resolve({ error: null })
-    ]);
-  } catch (e) {
-    console.error('syncAllToSupabase:', e);
+  const results = await Promise.all([
+    data.users.length ? supabase.from('users').upsert(data.users.map(mapUserToDb), { onConflict: 'id' }) : Promise.resolve({ error: null }),
+    data.vehicles.length ? supabase.from('vehicles').upsert(data.vehicles.map(mapVehicleToDb), { onConflict: 'id' }) : Promise.resolve({ error: null }),
+    data.customers.length ? supabase.from('customers').upsert(data.customers.map(mapCustomerToDb), { onConflict: 'id' }) : Promise.resolve({ error: null }),
+    data.fuelings.length ? supabase.from('fuelings').upsert(data.fuelings.map(mapFuelingToDb), { onConflict: 'id' }) : Promise.resolve({ error: null }),
+    data.maintenances.length ? supabase.from('maintenance_requests').upsert(data.maintenances.map(mapMaintenanceToDb), { onConflict: 'id' }) : Promise.resolve({ error: null }),
+    data.dailyRoutes.length ? supabase.from('daily_routes').upsert(data.dailyRoutes.map(mapDailyRouteToDb), { onConflict: 'id' }) : Promise.resolve({ error: null }),
+    data.routes.length ? supabase.from('route_departures').upsert(data.routes.map(mapRouteDepartureToDb), { onConflict: 'id' }) : Promise.resolve({ error: null }),
+    data.fixedExpenses.length ? supabase.from('fixed_expenses').upsert(data.fixedExpenses.map(mapFixedExpenseToDb), { onConflict: 'id' }) : Promise.resolve({ error: null }),
+    data.agregados.length ? supabase.from('agregados').upsert(data.agregados.map(mapAgregadoToDb), { onConflict: 'id' }) : Promise.resolve({ error: null }),
+    data.agregadoFreights.length ? supabase.from('agregado_freights').upsert(data.agregadoFreights.map(mapAgregadoFreightToDb), { onConflict: 'id' }) : Promise.resolve({ error: null }),
+    data.tolls.length ? supabase.from('tolls').upsert(data.tolls.map(mapTollToDb), { onConflict: 'id' }) : Promise.resolve({ error: null })
+  ]);
+  const err = results.find(r => r && r.error);
+  if (err && err.error) {
+    console.error('syncAllToSupabase:', err.error);
+    throw err.error;
   }
 }

@@ -233,61 +233,63 @@ const App: React.FC = () => {
       localStorage.getItem('pg_pending_daily_route');
 
     if (hasPending && supabase) {
-      // Voltou de um reload após enviar: aplica o novo registro e envia direto pro Supabase (admin vê na hora)
-      const pf = localStorage.getItem('pg_pending_fueling');
-      const pm = localStorage.getItem('pg_pending_maintenance');
-      const pdr = localStorage.getItem('pg_pending_daily_route');
+      const parse = (key: string) => {
+        try { const s = localStorage.getItem(key); return s ? JSON.parse(s) : []; } catch { return []; }
+      };
+      let payload = {
+        users: parse('pg_users'),
+        vehicles: parse('pg_vehicles'),
+        customers: parse('pg_customers'),
+        fuelings: parse('pg_fuelings'),
+        maintenances: parse('pg_maintenances'),
+        routes: parse('pg_routes'),
+        dailyRoutes: parse('pg_daily_routes'),
+        fixedExpenses: parse('pg_fixed_expenses'),
+        agregados: parse('pg_agregados'),
+        agregadoFreights: parse('pg_agregado_freights'),
+        tolls: parse('pg_tolls')
+      };
 
+      const pf = localStorage.getItem('pg_pending_fueling');
       if (pf) {
         try {
           const data = JSON.parse(pf);
           setFuelings(prev => [data, ...prev]);
           localStorage.removeItem('pg_pending_fueling');
-          // Envia pro Supabase na hora para o admin ver
-          setTimeout(() => {
-            const u = localStorage.getItem('pg_users'); const v = localStorage.getItem('pg_vehicles'); const c = localStorage.getItem('pg_customers');
-            const fu = localStorage.getItem('pg_fuelings'); const m = localStorage.getItem('pg_maintenances'); const r = localStorage.getItem('pg_routes');
-            const dr = localStorage.getItem('pg_daily_routes'); const fe = localStorage.getItem('pg_fixed_expenses'); const ag = localStorage.getItem('pg_agregados');
-            const af = localStorage.getItem('pg_agregado_freights'); const t = localStorage.getItem('pg_tolls');
-            const payload = {
-              users: u ? JSON.parse(u) : [], vehicles: v ? JSON.parse(v) : [], customers: c ? JSON.parse(c) : [],
-              fuelings: fu ? JSON.parse(fu) : [], maintenances: m ? JSON.parse(m) : [], routes: r ? JSON.parse(r) : [],
-              dailyRoutes: dr ? JSON.parse(dr) : [], fixedExpenses: fe ? JSON.parse(fe) : [], agregados: ag ? JSON.parse(ag) : [],
-              agregadoFreights: af ? JSON.parse(af) : [], tolls: t ? JSON.parse(t) : []
-            };
-            syncAllToSupabase(supabase, payload);
-          }, 800);
+          payload = { ...payload, fuelings: [data, ...payload.fuelings] };
         } catch (_) { localStorage.removeItem('pg_pending_fueling'); }
       }
+      const pm = localStorage.getItem('pg_pending_maintenance');
       if (pm) {
         try {
           const data = JSON.parse(pm);
           setMaintenances(prev => [data, ...prev]);
           localStorage.removeItem('pg_pending_maintenance');
-          setTimeout(() => {
-            const u = localStorage.getItem('pg_users'); const v = localStorage.getItem('pg_vehicles'); const c = localStorage.getItem('pg_customers');
-            const fu = localStorage.getItem('pg_fuelings'); const m = localStorage.getItem('pg_maintenances'); const r = localStorage.getItem('pg_routes');
-            const dr = localStorage.getItem('pg_daily_routes'); const fe = localStorage.getItem('pg_fixed_expenses'); const ag = localStorage.getItem('pg_agregados');
-            const af = localStorage.getItem('pg_agregado_freights'); const t = localStorage.getItem('pg_tolls');
-            syncAllToSupabase(supabase, { users: u ? JSON.parse(u) : [], vehicles: v ? JSON.parse(v) : [], customers: c ? JSON.parse(c) : [], fuelings: fu ? JSON.parse(fu) : [], maintenances: m ? JSON.parse(m) : [], routes: r ? JSON.parse(r) : [], dailyRoutes: dr ? JSON.parse(dr) : [], fixedExpenses: fe ? JSON.parse(fe) : [], agregados: ag ? JSON.parse(ag) : [], agregadoFreights: af ? JSON.parse(af) : [], tolls: t ? JSON.parse(t) : [] });
-          }, 800);
+          payload = { ...payload, maintenances: [data, ...payload.maintenances] };
         } catch (_) { localStorage.removeItem('pg_pending_maintenance'); }
       }
+      const pdr = localStorage.getItem('pg_pending_daily_route');
       if (pdr) {
         try {
           const data = JSON.parse(pdr);
           setDailyRoutes(prev => [data, ...prev]);
           localStorage.removeItem('pg_pending_daily_route');
-          setTimeout(() => {
-            const u = localStorage.getItem('pg_users'); const v = localStorage.getItem('pg_vehicles'); const c = localStorage.getItem('pg_customers');
-            const fu = localStorage.getItem('pg_fuelings'); const m = localStorage.getItem('pg_maintenances'); const r = localStorage.getItem('pg_routes');
-            const dr = localStorage.getItem('pg_daily_routes'); const fe = localStorage.getItem('pg_fixed_expenses'); const ag = localStorage.getItem('pg_agregados');
-            const af = localStorage.getItem('pg_agregado_freights'); const t = localStorage.getItem('pg_tolls');
-            syncAllToSupabase(supabase, { users: u ? JSON.parse(u) : [], vehicles: v ? JSON.parse(v) : [], customers: c ? JSON.parse(c) : [], fuelings: fu ? JSON.parse(fu) : [], maintenances: m ? JSON.parse(m) : [], routes: r ? JSON.parse(r) : [], dailyRoutes: dr ? JSON.parse(dr) : [], fixedExpenses: fe ? JSON.parse(fe) : [], agregados: ag ? JSON.parse(ag) : [], agregadoFreights: af ? JSON.parse(af) : [], tolls: t ? JSON.parse(t) : [] });
-          }, 800);
+          payload = { ...payload, dailyRoutes: [data, ...payload.dailyRoutes] };
         } catch (_) { localStorage.removeItem('pg_pending_daily_route'); }
       }
       setDbOnline(true);
+      // Envia ao Supabase na hora (admin vê ao atualizar); se falhar, recoloca pendente para tentar de novo ao recarregar
+      const savedPf = pf; const savedPm = pm; const savedPdr = pdr;
+      (async () => {
+        try {
+          await syncAllToSupabase(supabase, payload);
+        } catch (e) {
+          console.error('Falha ao sincronizar:', e);
+          if (savedPf) localStorage.setItem('pg_pending_fueling', savedPf);
+          if (savedPm) localStorage.setItem('pg_pending_maintenance', savedPm);
+          if (savedPdr) localStorage.setItem('pg_pending_daily_route', savedPdr);
+        }
+      })();
       return;
     }
     if (hasPending) {
